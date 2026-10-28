@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
@@ -18,11 +19,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tashik54.cardholder.data.CardRepository
+import com.tashik54.cardholder.ui.CardListViewModel
 import com.tashik54.cardholder.ui.screens.AddCardScreen
 import com.tashik54.cardholder.ui.screens.HomeScreen
 import com.tashik54.cardholder.ui.screens.SettingsScreen
@@ -51,14 +57,21 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun App() {
-    var screen by rememberSaveable { mutableStateOf<Screen>(Screen.Home) }
+    // Обычный remember: тип Screen не кладётся в Bundle, rememberSaveable здесь падал бы
+    var screen by remember { mutableStateOf<Screen>(Screen.Home) }
+
+    val context = LocalContext.current
+    val repository = remember(context) { CardRepository.from(context) }
+    val viewModel: CardListViewModel =
+        viewModel(factory = CardListViewModel.factory(repository))
+    val cards by viewModel.cards.collectAsStateWithLifecycle()
 
     Scaffold(
         containerColor = Color.Transparent,
         bottomBar = { BottomBar(screen, onSelect = { screen = it }) },
     ) { padding ->
         when (screen) {
-            Screen.Home -> HomeScreen(Modifier.padding(padding))
+            Screen.Home -> HomeScreen(cards = cards, modifier = Modifier.padding(padding))
             Screen.Add -> AddCardScreen(Modifier.padding(padding))
             Screen.Settings -> SettingsScreen(Modifier.padding(padding))
         }
@@ -75,7 +88,7 @@ private fun BottomBar(current: Screen, onSelect: (Screen) -> Unit) {
 }
 
 @Composable
-private fun androidx.compose.foundation.layout.RowScope.BottomItem(
+private fun RowScope.BottomItem(
     icon: ImageVector,
     label: String,
     selected: Boolean,
