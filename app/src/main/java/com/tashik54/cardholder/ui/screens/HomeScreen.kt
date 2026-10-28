@@ -28,7 +28,11 @@ import com.tashik54.cardholder.data.Card
  * у карт с фото останется только картинка, без названия.
  */
 @Composable
-fun HomeScreen(cards: List<Card>, modifier: Modifier = Modifier) {
+fun HomeScreen(
+    cards: List<Card>,
+    modifier: Modifier = Modifier,
+    onCardClick: (Card) -> Unit = {},
+) {
     if (cards.isEmpty()) {
         Column(
             modifier = modifier.fillMaxSize(),
@@ -59,14 +63,15 @@ fun HomeScreen(cards: List<Card>, modifier: Modifier = Modifier) {
         modifier = modifier.fillMaxSize(),
     ) {
         items(cards, key = { it.id }) { card ->
-            CardCell(card)
+            CardCell(card, onClick = { onCardClick(card) })
         }
     }
 }
 
 @Composable
-private fun CardCell(card: Card) {
+private fun CardCell(card: Card, onClick: () -> Unit) {
     Surface(
+        onClick = onClick,
         shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
         shadowElevation = 1.dp,

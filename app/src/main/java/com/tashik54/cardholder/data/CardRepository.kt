@@ -8,6 +8,8 @@ class CardRepository(private val dao: CardDao) {
 
     fun observeAll(): Flow<List<Card>> = dao.observeAll()
 
+    fun observeById(id: Long): Flow<Card?> = dao.observeById(id)
+
     suspend fun add(card: Card): Long = dao.insert(card)
 
     suspend fun update(card: Card) = dao.update(card)

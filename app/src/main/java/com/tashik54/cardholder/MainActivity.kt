@@ -30,6 +30,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tashik54.cardholder.data.CardRepository
 import com.tashik54.cardholder.ui.CardListViewModel
 import com.tashik54.cardholder.ui.screens.AddCardScreen
+import com.tashik54.cardholder.ui.screens.CardScreen
 import com.tashik54.cardholder.ui.screens.HomeScreen
 import com.tashik54.cardholder.ui.screens.SettingsScreen
 import com.tashik54.cardholder.ui.theme.CardHolderTheme
@@ -39,6 +40,7 @@ private sealed interface Screen {
     data object Home : Screen
     data object Add : Screen
     data object Settings : Screen
+    data class Detail(val cardId: Long) : Screen
 }
 
 class MainActivity : ComponentActivity() {
@@ -70,13 +72,22 @@ private fun App() {
         containerColor = Color.Transparent,
         bottomBar = { BottomBar(screen, onSelect = { screen = it }) },
     ) { padding ->
-        when (screen) {
-            Screen.Home -> HomeScreen(cards = cards, modifier = Modifier.padding(padding))
+        when (val s = screen) {
+            Screen.Home -> HomeScreen(
+                cards = cards,
+                modifier = Modifier.padding(padding),
+                onCardClick = { screen = Screen.Detail(it.id) },
+            )
             Screen.Add -> AddCardScreen(
                 modifier = Modifier.padding(padding),
                 onSaved = { screen = Screen.Home },
             )
             Screen.Settings -> SettingsScreen(Modifier.padding(padding))
+            is Screen.Detail -> CardScreen(
+                cardId = s.cardId,
+                modifier = Modifier.padding(padding),
+                onBack = { screen = Screen.Home },
+            )
         }
     }
 }
