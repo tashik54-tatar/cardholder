@@ -18,6 +18,8 @@ class AddCardViewModel(private val repository: CardRepository) : ViewModel() {
         codeType: CodeType,
         codeValue: String,
         barcodeFormat: String? = null,
+        frontPhotoPath: String? = null,
+        backPhotoPath: String? = null,
         onDone: () -> Unit,
     ) {
         viewModelScope.launch {
@@ -27,6 +29,8 @@ class AddCardViewModel(private val repository: CardRepository) : ViewModel() {
                     codeType = codeType,
                     codeValue = codeValue.trim(),
                     barcodeFormat = barcodeFormat,
+                    frontPhotoPath = frontPhotoPath,
+                    backPhotoPath = backPhotoPath,
                 ),
             )
             onDone()

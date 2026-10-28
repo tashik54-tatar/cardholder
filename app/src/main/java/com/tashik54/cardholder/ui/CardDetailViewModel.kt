@@ -10,11 +10,21 @@ import com.tashik54.cardholder.data.CardRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import androidx.lifecycle.viewModelScope
 
-class CardDetailViewModel(repository: CardRepository, cardId: Long) : ViewModel() {
+class CardDetailViewModel(
+    private val repository: CardRepository,
+    cardId: Long,
+) : ViewModel() {
 
     val card: StateFlow<Card?> = repository.observeById(cardId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /** Сохраняет изменения карты (например, фото сторон). */
+    fun update(card: Card) {
+        viewModelScope.launch { repository.update(card) }
+    }
 
     companion object {
         fun factory(repository: CardRepository, cardId: Long): ViewModelProvider.Factory =

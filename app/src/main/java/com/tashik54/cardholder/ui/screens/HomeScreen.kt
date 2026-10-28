@@ -1,5 +1,6 @@
 package com.tashik54.cardholder.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -15,17 +16,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tashik54.cardholder.data.Card
+import com.tashik54.cardholder.data.PhotoStore
 
 /**
- * Главный экран: сетка карт. Пока показываем названия магазинов;
- * фото лицевых сторон появятся на этапе съёмки/обрезки (v0.6–v0.7):
- * у карт с фото останется только картинка, без названия.
+ * Главный экран: сетка карт. У карт с фото лицевой стороны — только фото,
+ * у карт без фото — название магазина. Тап по карте открывает экран карты.
  */
 @Composable
 fun HomeScreen(
@@ -79,19 +83,32 @@ private fun CardCell(card: Card, onClick: () -> Unit) {
             .fillMaxWidth()
             .aspectRatio(1.586f), // пропорция банковской карты
     ) {
-        Column(
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(12.dp),
-        ) {
-            Text(
-                text = card.storeName,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
+        val photo = remember(card.frontPhotoPath) {
+            PhotoStore.load(card.frontPhotoPath, maxDim = 512)
+        }
+        if (photo != null) {
+            // Есть фото лицевой стороны — показываем только его
+            Image(
+                bitmap = photo.asImageBitmap(),
+                contentDescription = card.storeName,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
             )
+        } else {
+            Column(
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(12.dp),
+            ) {
+                Text(
+                    text = card.storeName,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }
