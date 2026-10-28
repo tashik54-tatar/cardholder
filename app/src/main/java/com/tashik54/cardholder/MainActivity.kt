@@ -72,7 +72,10 @@ private fun App() {
     ) { padding ->
         when (screen) {
             Screen.Home -> HomeScreen(cards = cards, modifier = Modifier.padding(padding))
-            Screen.Add -> AddCardScreen(Modifier.padding(padding))
+            Screen.Add -> AddCardScreen(
+                modifier = Modifier.padding(padding),
+                onSaved = { screen = Screen.Home },
+            )
             Screen.Settings -> SettingsScreen(Modifier.padding(padding))
         }
     }
