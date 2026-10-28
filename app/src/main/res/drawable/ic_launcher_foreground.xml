@@ -1,14 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Белая карточка со штрихкодом и фирменной полосой — в безопасной зоне иконки -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Карта: белая карточка со скруглениями и цветной полосой -->
+
+    <!-- Лёгкая тень под карточкой -->
+    <path
+        android:fillColor="#18000000"
+        android:pathData="M24,37 h60 a8,8 0 0 1 8,8 v20 a8,8 0 0 1 -8,8 h-60 a8,8 0 0 1 -8,-8 v-20 a8,8 0 0 1 8,-8 z"
+        android:translateY="2.5" />
+
+    <!-- Карточка -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M30,36 h48 a6,6 0 0 1 6,6 v24 a6,6 0 0 1 -6,6 h-48 a6,6 0 0 1 -6,-6 v-24 a6,6 0 0 1 6,-6 z" />
+        android:pathData="M24,35 h60 a8,8 0 0 1 8,8 v22 a8,8 0 0 1 -8,8 h-60 a8,8 0 0 1 -8,-8 v-22 a8,8 0 0 1 8,-8 z" />
+
+    <!-- Фирменная полоса-магнит -->
     <path
         android:fillColor="#5C6BC0"
-        android:pathData="M24,44 h60 v7 h-60 z" />
+        android:pathData="M25,41 h58 v4.5 h-58 z" />
+
+    <!-- Штрихкод -->
+    <path
+        android:fillColor="#1C1B22"
+        android:pathData="
+            M30,51 h2.6 v14 h-2.6 z
+            M35,51 h1.4 v14 h-1.4 z
+            M39,51 h3.2 v14 h-3.2 z
+            M45,51 h1.4 v14 h-1.4 z
+            M49,51 h2.2 v14 h-2.2 z
+            M54,51 h3.4 v14 h-3.4 z
+            M60,51 h1.4 v14 h-1.4 z
+            M64,51 h2.4 v14 h-2.4 z
+            M69,51 h1.4 v14 h-1.4 z
+            M73,51 h3 v14 h-3 z" />
 </vector>

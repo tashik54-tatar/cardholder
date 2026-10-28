@@ -48,6 +48,31 @@ object PhotoStore {
         }
     }
 
+    /** Загрузка картинки из галереи по Uri с даунсэмплом (для фото стороны). */
+    fun loadFromUri(context: Context, uri: android.net.Uri, maxDim: Int = 2048): Bitmap? = try {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        context.contentResolver.openInputStream(uri)?.use {
+            BitmapFactory.decodeStream(it, null, bounds)
+        }
+        if (bounds.outWidth <= 0) {
+            null
+        } else {
+            var sample = 1
+            while (bounds.outWidth / (sample * 2) >= maxDim || bounds.outHeight / (sample * 2) >= maxDim) {
+                sample *= 2
+            }
+            context.contentResolver.openInputStream(uri)?.use {
+                BitmapFactory.decodeStream(
+                    it,
+                    null,
+                    BitmapFactory.Options().apply { inSampleSize = sample },
+                )
+            }
+        }
+    } catch (_: Exception) {
+        null
+    }
+
     /**
      * Загрузка снимка камеры с учётом поворота из EXIF — иначе фото
      * с некоторых устройств сохраняется «лёжа на боку».

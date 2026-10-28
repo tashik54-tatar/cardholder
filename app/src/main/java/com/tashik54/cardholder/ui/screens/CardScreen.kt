@@ -1,6 +1,13 @@
 package com.tashik54.cardholder.ui.screens
 
 import android.graphics.Bitmap
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -27,11 +34,13 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -58,6 +67,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tashik54.cardholder.data.Card
+import com.tashik54.cardholder.data.AppSettings
 import com.tashik54.cardholder.data.CardRepository
 import com.tashik54.cardholder.data.CodeType
 import com.tashik54.cardholder.data.CodeRenderer
@@ -87,6 +97,11 @@ fun CardScreen(
     val current = card ?: return
 
     var editing by rememberSaveable { mutableStateOf(false) }
+
+    // «Назад» сначала выходит из режима редактирования, потом со страницы карты
+    BackHandler(enabled = true) {
+        if (editing) editing = false else onBack()
+    }
 
     Column(
         modifier = modifier
@@ -172,29 +187,51 @@ fun CardScreen(
                 )
             }
 
-            // Фото сторон: тап — просмотр на весь экран; подписей нет
+            // Фото сторон: по настройке скрыты за кнопкой; тап по фото — на весь экран
             if (current.frontPhotoPath != null || current.backPhotoPath != null) {
-                Spacer(Modifier.height(24.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    var viewingPath by remember { mutableStateOf<String?>(null) }
-                    PhotoView(
-                        label = "Лицевая сторона",
-                        path = current.frontPhotoPath,
-                        onClick = { current.frontPhotoPath?.let { viewingPath = it } },
-                        modifier = Modifier.weight(1f),
-                    )
-                    PhotoView(
-                        label = "Сторона со штрихкодом",
-                        path = current.backPhotoPath,
-                        onClick = { current.backPhotoPath?.let { viewingPath = it } },
-                        modifier = Modifier.weight(1f),
-                    )
-                    viewingPath?.let { path ->
-                        PhotoViewerDialog(
-                            label = if (path == current.frontPhotoPath) "Лицевая сторона" else "Сторона со штрихкодом",
-                            path = path,
-                            onDismiss = { viewingPath = null },
+                val hidePhotos = AppSettings.hidePhotosOnCardPage.value
+                var photosOpen by rememberSaveable { mutableStateOf(!hidePhotos) }
+                if (hidePhotos) {
+                    Spacer(Modifier.height(16.dp))
+                    OutlinedButton(
+                        onClick = { photosOpen = !photosOpen },
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                    ) {
+                        Icon(
+                            Icons.Filled.PhotoLibrary,
+                            contentDescription = null,
+                            modifier = Modifier.padding(end = 6.dp),
                         )
+                        Text(if (photosOpen) "Скрыть фото" else "Показать фото")
+                    }
+                }
+                AnimatedVisibility(
+                    visible = photosOpen || !hidePhotos,
+                    enter = fadeIn(tween(200)) + expandVertically(tween(200)),
+                    exit = fadeOut(tween(150)) + shrinkVertically(tween(150)),
+                ) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        var viewingPath by remember { mutableStateOf<String?>(null) }
+                        PhotoView(
+                            label = "Лицевая сторона",
+                            path = current.frontPhotoPath,
+                            onClick = { current.frontPhotoPath?.let { viewingPath = it } },
+                            modifier = Modifier.weight(1f),
+                        )
+                        PhotoView(
+                            label = "Сторона со штрихкодом",
+                            path = current.backPhotoPath,
+                            onClick = { current.backPhotoPath?.let { viewingPath = it } },
+                            modifier = Modifier.weight(1f),
+                        )
+                        viewingPath?.let { path ->
+                            PhotoViewerDialog(
+                                label = if (path == current.frontPhotoPath) "Лицевая сторона" else "Сторона со штрихкодом",
+                                path = path,
+                                onDismiss = { viewingPath = null },
+                            )
+                        }
                     }
                 }
             }

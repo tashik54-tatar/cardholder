@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Фирменный пастельный градиент фона иконки (как фон приложения) -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient
+        android:type="linear"
+        android:angle="315"
+        android:startColor="#FFE3EE"
+        android:centerColor="#E8DDFF"
+        android:endColor="#DDE9FF" />
+</shape>

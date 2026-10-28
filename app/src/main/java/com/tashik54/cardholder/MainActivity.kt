@@ -2,6 +2,7 @@ package com.tashik54.cardholder
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContent
@@ -32,6 +33,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tashik54.cardholder.data.AppSettings
 import com.tashik54.cardholder.data.CardRepository
 import com.tashik54.cardholder.ui.CardListViewModel
 import com.tashik54.cardholder.ui.screens.AddCardScreen
@@ -52,6 +54,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        AppSettings.init(this)
         setContent {
             CardHolderTheme {
                 GradientBackground {
@@ -66,6 +69,13 @@ class MainActivity : ComponentActivity() {
 private fun App() {
     // Обычный remember: тип Screen не кладётся в Bundle, rememberSaveable здесь падал бы
     var screen by remember { mutableStateOf<Screen>(Screen.Home) }
+
+    // Системный «назад» возвращает на главный экран, а не закрывает приложение.
+    // Экраны со своими состояниями (карта, форма) ставят свои BackHandler —
+    // они имеют приоритет над этим.
+    BackHandler(enabled = screen != Screen.Home) {
+        screen = Screen.Home
+    }
 
     val context = LocalContext.current
     val repository = remember(context) { CardRepository.from(context) }

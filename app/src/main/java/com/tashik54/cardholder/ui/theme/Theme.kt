@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.tashik54.cardholder.R
+import com.tashik54.cardholder.data.AppSettings
 import kotlin.random.Random
 
 // Inter — ближайший свободный аналог SF Pro (шрифт «hello» при загрузке macOS).
@@ -93,16 +94,23 @@ private val DarkScheme = darkColorScheme(
     background = Color.Transparent,
 )
 
+/** Тёмная ли сейчас тема: с учётом выбора пользователя в настройках. */
+@Composable
+fun isDarkTheme(): Boolean = when (AppSettings.themeMode.value) {
+    AppSettings.THEME_LIGHT -> false
+    AppSettings.THEME_DARK -> true
+    else -> isSystemInDarkTheme()
+}
+
 @Composable
 fun AppGradientBrush(): Brush = Brush.verticalGradient(
-    if (isSystemInDarkTheme()) DarkGradientColors else LightGradientColors,
+    if (isDarkTheme()) DarkGradientColors else LightGradientColors,
 )
 
 @Composable
 fun CardHolderTheme(content: @Composable () -> Unit) {
-    val dark = isSystemInDarkTheme()
     MaterialTheme(
-        colorScheme = if (dark) DarkScheme else LightScheme,
+        colorScheme = if (isDarkTheme()) DarkScheme else LightScheme,
         typography = InterTypography,
         content = content,
     )
@@ -128,7 +136,7 @@ fun GradientBackground(content: @Composable () -> Unit) {
  */
 @Composable
 private fun PatternOverlay(modifier: Modifier = Modifier) {
-    val dark = isSystemInDarkTheme()
+    val dark = isDarkTheme()
     val shapeColor = if (dark) Color.White.copy(alpha = 0.045f) else Color.White.copy(alpha = 0.09f)
     val density = LocalDensity.current
 

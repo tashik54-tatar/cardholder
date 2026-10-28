@@ -2,6 +2,7 @@ package com.tashik54.cardholder.ui.screens
 
 import android.graphics.Bitmap
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -28,9 +29,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -40,6 +43,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -102,6 +106,8 @@ fun AddCardScreen(
 
     // Какую сторону снимаем: "front" / "back"
     var capturingSide by rememberSaveable { mutableStateOf<String?>(null) }
+    // Для какой стороны выбираем источник фото (камера/галерея)
+    var choosingSide by rememberSaveable { mutableStateOf<String?>(null) }
     // Стадия после снимка: обрезка фото
     var croppingSide by rememberSaveable { mutableStateOf<String?>(null) }
     var pendingCropBitmap by remember { mutableStateOf<Bitmap?>(null) }
@@ -115,6 +121,39 @@ fun AddCardScreen(
         PhotoStore.delete(frontPhotoPath)
         PhotoStore.delete(backPhotoPath)
         onCancel()
+    }
+
+    // «Назад» закрывает форму (слой камеры/обрезки — это диалоги,
+    // они обрабатывают «назад» сами)
+    BackHandler(enabled = true) { cancel() }
+
+    // Для какой стороны ждем картинку из галереи
+    var gallerySideToPick by remember { mutableStateOf<String?>(null) }
+
+    val pickGalleryImage = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia(),
+    ) { uri ->
+        val side = gallerySideToPick
+        gallerySideToPick = null
+        if (uri != null && side != null) {
+            scope.launch {
+                val bitmap = withContext(Dispatchers.IO) { PhotoStore.loadFromUri(context, uri) }
+                if (bitmap == null) {
+                    Toast.makeText(context, "Не удалось открыть изображение", Toast.LENGTH_SHORT).show()
+                } else {
+                    pendingBarcode = BarcodeDecoder.decodeBestEffort(context, bitmap)
+                    pendingCropBitmap = bitmap
+                    croppingSide = side
+                }
+            }
+        }
+    }
+
+    fun useGallery(side: String) {
+        gallerySideToPick = side
+        pickGalleryImage.launch(
+            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+        )
     }
 
     // Тип кода и предпросмотр считаются из текущего значения
@@ -211,17 +250,86 @@ fun AddCardScreen(
         }
     }
 
+    // Выбор источника фото: камера или галерея
+    choosingSide?.let { side ->
+        AlertDialog(
+            onDismissRequest = { choosingSide = null },
+            title = { Text("Фото стороны") },
+            text = {
+                Text(
+                    if (side == "front") {
+                        "Лицевая сторона: сфотографировать карту или взять готовую картинку из телефона?"
+                    } else {
+                        "Сторона со штрихкодом: сфотографировать или взять готовую картинку (можно скриншот)?"
+                    }
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        choosingSide = null
+                        capturingSide = side
+                    },
+                ) { Text("Сделать фото") }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        choosingSide = null
+                        useGallery(side)
+                    },
+                ) { Text("Из галереи") }
+            },
+        )
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
     ) {
-        Text(
-            text = "Новая карта",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(top = 16.dp, bottom = 24.dp),
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp, bottom = 24.dp),
+        ) {
+            Text(
+                text = "Новая карта",
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.weight(1f),
+            )
+            // Крестик — отмена, галочка — сохранить
+            IconButton(onClick = { cancel() }) {
+                Icon(
+                    Icons.Filled.Close,
+                    contentDescription = "Отмена",
+                    tint = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+            IconButton(onClick = {
+                viewModel.save(
+                    storeName = storeName,
+                    codeType = resolvedType,
+                    codeValue = codeValue,
+                    barcodeFormat = detectedFormat?.takeIf { resolvedType != CodeType.QR },
+                    frontPhotoPath = frontPhotoPath,
+                    backPhotoPath = backPhotoPath,
+                    onDone = onSaved,
+                )
+            }, enabled = canSave) {
+                Icon(
+                    Icons.Filled.Check,
+                    contentDescription = "Сохранить",
+                    tint = if (canSave) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                    },
+                )
+            }
+        }
 
         OutlinedTextField(
             value = storeName,
@@ -249,7 +357,7 @@ fun AddCardScreen(
                 label = "Лицевая сторона",
                 hint = "Сфотографировать лицевую",
                 photoPath = frontPhotoPath,
-                onShoot = { capturingSide = "front" },
+                onShoot = { choosingSide = "front" },
                 onClear = {
                     PhotoStore.delete(frontPhotoPath)
                     frontPhotoPath = null
@@ -260,7 +368,7 @@ fun AddCardScreen(
                 label = "Сторона со штрихкодом",
                 hint = "Сфотографировать штрихкод",
                 photoPath = backPhotoPath,
-                onShoot = { capturingSide = "back" },
+                onShoot = { choosingSide = "back" },
                 onClear = {
                     PhotoStore.delete(backPhotoPath)
                     backPhotoPath = null
@@ -350,44 +458,6 @@ fun AddCardScreen(
         }
 
         Spacer(Modifier.weight(1f))
-
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedButton(
-                onClick = { cancel() },
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier
-                    .weight(1f)
-                    .height(52.dp),
-            ) {
-                Text("Отмена", style = MaterialTheme.typography.titleMedium)
-            }
-            Button(
-                onClick = {
-                    viewModel.save(
-                        storeName = storeName,
-                        codeType = resolvedType,
-                        codeValue = codeValue,
-                        barcodeFormat = detectedFormat?.takeIf { resolvedType != CodeType.QR },
-                        frontPhotoPath = frontPhotoPath,
-                        backPhotoPath = backPhotoPath,
-                        onDone = onSaved,
-                    )
-                },
-                enabled = canSave,
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                ),
-                modifier = Modifier
-                    .weight(1f)
-                    .height(52.dp),
-            ) {
-                Text(
-                    "Сохранить",
-                    style = MaterialTheme.typography.titleMedium,
-                )
-            }
-        }
         Spacer(Modifier.height(16.dp))
     }
 }
