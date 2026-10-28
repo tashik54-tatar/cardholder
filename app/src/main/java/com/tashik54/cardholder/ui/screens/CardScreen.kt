@@ -26,23 +26,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PhotoLibrary
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -76,15 +69,15 @@ import com.tashik54.cardholder.ui.CardDetailViewModel
 
 /**
  * Экран карты: отрисованный штрихкод или QR крупно на белом фоне —
- * чтобы кассовый сканер уверенно читал с экрана. Ниже — фото сторон
- * (просмотр). Карандаш в шапке включает редактирование: название,
- * удаление карты. Фото снимаются только при добавлении карты.
+ * чтобы кассовый сканер уверенно читал с экрана. Карандаш открывает
+ * полную форму редактирования. Фото сторон — по настройке.
  */
 @Composable
 fun CardScreen(
     cardId: Long,
     modifier: Modifier = Modifier,
     onBack: () -> Unit,
+    onEdit: (Card) -> Unit = {},
 ) {
     val context = LocalContext.current
     val viewModel: CardDetailViewModel =
@@ -96,58 +89,37 @@ fun CardScreen(
 
     val current = card ?: return
 
-    var editing by rememberSaveable { mutableStateOf(false) }
-
-    // «Назад» сначала выходит из режима редактирования, потом со страницы карты
-    BackHandler(enabled = true) {
-        if (editing) editing = false else onBack()
-    }
+    BackHandler(enabled = true) { onBack() }
 
     Column(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
     ) {
-        if (editing) {
-            EditBar(
-                card = current,
-                onSave = { name ->
-                    if (name.isNotBlank() && name != current.storeName) {
-                        viewModel.update(current.copy(storeName = name.trim()))
-                    }
-                    editing = false
-                },
-                onDelete = {
-                    viewModel.delete(current)
-                    onBack()
-                },
-                onCancel = { editing = false },
-            )
-        } else {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(top = 8.dp),
-            ) {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Назад",
-                        tint = MaterialTheme.colorScheme.onSurface,
-                    )
-                }
-                Text(
-                    text = current.storeName,
-                    style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.weight(1f),
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(top = 8.dp),
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Назад",
+                    tint = MaterialTheme.colorScheme.onSurface,
                 )
-                IconButton(onClick = { editing = true }) {
-                    Icon(
-                        Icons.Filled.Edit,
-                        contentDescription = "Редактировать",
-                        tint = MaterialTheme.colorScheme.onSurface,
-                    )
-                }
             }
+            Text(
+                text = current.storeName,
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.weight(1f),
+            )
+            IconButton(onClick = { onEdit(current) }) {
+                Icon(
+                    Icons.Filled.Edit,
+                    contentDescription = "Редактировать",
+                    tint = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+        }
 
             if (current.codeValue.isNotBlank()) {
                 val bitmap = remember(current.id, current.codeValue, current.codeType, current.barcodeFormat) {
@@ -236,84 +208,6 @@ fun CardScreen(
                 }
             }
             Spacer(Modifier.height(24.dp))
-        }
-    }
-}
-
-/** Режим редактирования: переименование и удаление карты. */
-@Composable
-private fun EditBar(
-    card: Card,
-    onSave: (String) -> Unit,
-    onDelete: () -> Unit,
-    onCancel: () -> Unit,
-) {
-    var name by rememberSaveable { mutableStateOf(card.storeName) }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(top = 8.dp),
-        ) {
-            IconButton(onClick = onCancel) {
-                Icon(
-                    Icons.Filled.Close,
-                    contentDescription = "Отмена",
-                    tint = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-            Text(
-                text = "Редактирование",
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.weight(1f),
-            )
-            IconButton(
-                onClick = { onSave(name) },
-                enabled = name.isNotBlank(),
-            ) {
-                Icon(
-                    Icons.Filled.Check,
-                    contentDescription = "Сохранить",
-                    tint = MaterialTheme.colorScheme.primary,
-                )
-            }
-        }
-
-        Spacer(Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = name,
-            onValueChange = { name = it },
-            label = { Text("Название магазина") },
-            singleLine = true,
-            shape = RoundedCornerShape(16.dp),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { onSave(name) }),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = Color.White.copy(alpha = 0.7f),
-                unfocusedContainerColor = Color.White.copy(alpha = 0.5f),
-            ),
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        Spacer(Modifier.height(32.dp))
-
-        Button(
-            onClick = onDelete,
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFC65B4E),
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
-        ) {
-            Text("Удалить карту", style = MaterialTheme.typography.titleMedium)
-        }
     }
 }
 

@@ -34,6 +34,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tashik54.cardholder.data.AppSettings
+import com.tashik54.cardholder.data.Card
 import com.tashik54.cardholder.data.CardRepository
 import com.tashik54.cardholder.ui.CardListViewModel
 import com.tashik54.cardholder.ui.screens.AddCardScreen
@@ -48,6 +49,7 @@ private sealed interface Screen {
     data object Add : Screen
     data object Settings : Screen
     data class Detail(val cardId: Long) : Screen
+    data class Edit(val card: Card) : Screen
 }
 
 class MainActivity : ComponentActivity() {
@@ -105,11 +107,21 @@ private fun App() {
                     onSaved = { screen = Screen.Home },
                     onCancel = { screen = Screen.Home },
                 )
-                Screen.Settings -> SettingsScreen(Modifier.padding(padding))
+                Screen.Settings -> SettingsScreen(
+                    modifier = Modifier.padding(padding),
+                    onBack = { screen = Screen.Home },
+                )
                 is Screen.Detail -> CardScreen(
                     cardId = s.cardId,
                     modifier = Modifier.padding(padding),
                     onBack = { screen = Screen.Home },
+                    onEdit = { card -> screen = Screen.Edit(card) },
+                )
+                is Screen.Edit -> AddCardScreen(
+                    existing = s.card,
+                    modifier = Modifier.padding(padding),
+                    onSaved = { screen = Screen.Home },
+                    onCancel = { screen = Screen.Home },
                 )
             }
         }

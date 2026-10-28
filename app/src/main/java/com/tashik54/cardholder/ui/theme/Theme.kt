@@ -137,7 +137,12 @@ fun GradientBackground(content: @Composable () -> Unit) {
 @Composable
 private fun PatternOverlay(modifier: Modifier = Modifier) {
     val dark = isDarkTheme()
-    val shapeColor = if (dark) Color.White.copy(alpha = 0.045f) else Color.White.copy(alpha = 0.09f)
+    // В светлой теме узор темнее фона (индиго-тон градиента), в тёмной — светлее
+    val shapeColor = if (dark) {
+        Color.White.copy(alpha = 0.045f)
+    } else {
+        Color(0xFF5C6BC0).copy(alpha = 0.10f)
+    }
     val density = LocalDensity.current
 
     Canvas(modifier) {

@@ -14,6 +14,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,17 +26,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -46,6 +49,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -53,6 +57,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -62,6 +67,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.tashik54.cardholder.data.BarcodeDecoder
+import com.tashik54.cardholder.data.Card
 import com.tashik54.cardholder.data.CardRepository
 import com.tashik54.cardholder.data.CodeRenderer
 import com.tashik54.cardholder.data.CodeType
@@ -78,6 +84,43 @@ import kotlinx.coroutines.withContext
 private val PanelColor: Color @Composable get() = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
 private val PanelColorDim: Color @Composable get() = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
 
+/** Круглая кнопка в шапке формы: filled — залитая (главное действие), иначе с обводкой. */
+@Composable
+private fun HeaderIconButton(
+    onClick: () -> Unit,
+    filled: Boolean,
+    enabled: Boolean = true,
+    content: @Composable () -> Unit,
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(44.dp)
+            .clip(CircleShape)
+            .then(
+                if (filled) {
+                    Modifier.background(
+                        if (enabled) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.18f)
+                        },
+                        CircleShape,
+                    )
+                } else {
+                    Modifier.border(
+                        1.5.dp,
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f),
+                        CircleShape,
+                    )
+                },
+            )
+            .clickable(enabled = enabled, onClick = onClick),
+    ) {
+        content()
+    }
+}
+
 /**
  * Форма новой карты: название магазина, фото сторон и значение кода.
  *
@@ -90,6 +133,7 @@ private val PanelColorDim: Color @Composable get() = MaterialTheme.colorScheme.s
 @Composable
 fun AddCardScreen(
     modifier: Modifier = Modifier,
+    existing: Card? = null,
     onSaved: () -> Unit,
     onCancel: () -> Unit = {},
 ) {
@@ -98,11 +142,15 @@ fun AddCardScreen(
     val viewModel: AddCardViewModel =
         viewModel(factory = AddCardViewModel.factory(CardRepository.from(context)))
 
-    var storeName by rememberSaveable { mutableStateOf("") }
-    var codeValue by rememberSaveable { mutableStateOf("") }
-    var detectedFormat by rememberSaveable { mutableStateOf<String?>(null) }
-    var frontPhotoPath by rememberSaveable { mutableStateOf<String?>(null) }
-    var backPhotoPath by rememberSaveable { mutableStateOf<String?>(null) }
+    var storeName by rememberSaveable { mutableStateOf(existing?.storeName ?: "") }
+    var codeValue by rememberSaveable { mutableStateOf(existing?.codeValue ?: "") }
+    var detectedFormat by rememberSaveable { mutableStateOf(existing?.barcodeFormat) }
+    var frontPhotoPath by rememberSaveable { mutableStateOf(existing?.frontPhotoPath) }
+    var backPhotoPath by rememberSaveable { mutableStateOf(existing?.backPhotoPath) }
+    // Подтверждение удаления (только в режиме редактирования)
+    var confirmDelete by remember { mutableStateOf(false) }
+    // В режиме редактирования старые файлы фото удаляем только после сохранения
+    val orphanPaths = remember { mutableStateListOf<String>() }
 
     // Какую сторону снимаем: "front" / "back"
     var capturingSide by rememberSaveable { mutableStateOf<String?>(null) }
@@ -116,11 +164,43 @@ fun AddCardScreen(
     // Код теперь необязателен: карту можно сохранить только с фото сторон
     val canSave = storeName.isNotBlank()
 
+    // Тип кода и предпросмотр считаются из текущего значения
+    val resolvedType = resolveCodeType(codeValue, detectedFormat)
+    val previewBitmap = remember(codeValue) {
+        if (codeValue.isBlank()) null
+        else try {
+            CodeRenderer.render(codeValue, resolvedType, detectedFormat, width = 720, height = 240)
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     fun cancel() {
-        // Несохранённые фото не должны оставаться файлами-сиротами
-        PhotoStore.delete(frontPhotoPath)
-        PhotoStore.delete(backPhotoPath)
+        // В новой карте несохранённые фото — сироты, удаляем.
+        // В редактировании файлы принадлежат сохранённой карте — не трогаем.
+        if (existing == null) {
+            PhotoStore.delete(frontPhotoPath)
+            PhotoStore.delete(backPhotoPath)
+        }
         onCancel()
+    }
+
+    fun saveCard() {
+        val orphans = orphanPaths.toList()
+        viewModel.save(
+            storeName = storeName,
+            codeType = resolvedType,
+            codeValue = codeValue,
+            barcodeFormat = detectedFormat?.takeIf { resolvedType != CodeType.QR },
+            frontPhotoPath = frontPhotoPath,
+            backPhotoPath = backPhotoPath,
+            cardId = existing?.id ?: 0,
+            createdAt = existing?.createdAt,
+            onDone = {
+                orphans.forEach { PhotoStore.delete(it) }
+                onSaved()
+            },
+        )
     }
 
     // «Назад» закрывает форму (слой камеры/обрезки — это диалоги,
@@ -156,17 +236,6 @@ fun AddCardScreen(
         )
     }
 
-    // Тип кода и предпросмотр считаются из текущего значения
-    val resolvedType = resolveCodeType(codeValue, detectedFormat)
-    val previewBitmap = remember(codeValue) {
-        if (codeValue.isBlank()) null
-        else try {
-            CodeRenderer.render(codeValue, resolvedType, detectedFormat, width = 720, height = 240)
-        } catch (_: Exception) {
-            null
-        }
-    }
-
     fun applyBarcode(barcode: Barcode) {
         val value = barcode.rawValue ?: return
         codeValue = value
@@ -187,7 +256,9 @@ fun AddCardScreen(
                 val goesToBack = barcode != null || target == "back"
                 val path = withContext(Dispatchers.IO) { PhotoStore.save(context, cropped) }
                 if (goesToBack) {
-                    PhotoStore.delete(backPhotoPath?.takeIf { it != path })
+                    backPhotoPath?.takeIf { it != path }?.let { old ->
+                        if (existing == null) PhotoStore.delete(old) else orphanPaths.add(old)
+                    }
                     backPhotoPath = path
                     barcode?.let { applyBarcode(it) }
                         ?: Toast.makeText(
@@ -196,7 +267,9 @@ fun AddCardScreen(
                             Toast.LENGTH_LONG,
                         ).show()
                 } else {
-                    PhotoStore.delete(frontPhotoPath?.takeIf { it != path })
+                    frontPhotoPath?.takeIf { it != path }?.let { old ->
+                        if (existing == null) PhotoStore.delete(old) else orphanPaths.add(old)
+                    }
                     frontPhotoPath = path
                 }
             }
@@ -283,6 +356,34 @@ fun AddCardScreen(
         )
     }
 
+    // Подтверждение удаления карты
+    if (confirmDelete) {
+        AlertDialog(
+            onDismissRequest = { confirmDelete = false },
+            title = { Text("Удалить карту?") },
+            text = { Text("Карта «${existing?.storeName ?: ""}» и её фото будут удалены безвозвратно.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmDelete = false
+                        existing?.let { card ->
+                            viewModel.delete(
+                                card.copy(
+                                    frontPhotoPath = frontPhotoPath,
+                                    backPhotoPath = backPhotoPath,
+                                ),
+                                onDone = onSaved,
+                            )
+                        }
+                    },
+                ) { Text("Удалить", color = Color(0xFFC65B4E)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDelete = false }) { Text("Отмена") }
+            },
+        )
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -296,39 +397,53 @@ fun AddCardScreen(
                 .padding(top = 16.dp, bottom = 24.dp),
         ) {
             Text(
-                text = "Новая карта",
+                text = if (existing == null) "Новая карта" else "Редактирование",
                 style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.weight(1f),
             )
-            // Крестик — отмена, галочка — сохранить
-            IconButton(onClick = { cancel() }) {
-                Icon(
-                    Icons.Filled.Close,
-                    contentDescription = "Отмена",
-                    tint = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-            IconButton(onClick = {
-                viewModel.save(
-                    storeName = storeName,
-                    codeType = resolvedType,
-                    codeValue = codeValue,
-                    barcodeFormat = detectedFormat?.takeIf { resolvedType != CodeType.QR },
-                    frontPhotoPath = frontPhotoPath,
-                    backPhotoPath = backPhotoPath,
-                    onDone = onSaved,
-                )
-            }, enabled = canSave) {
-                Icon(
-                    Icons.Filled.Check,
-                    contentDescription = "Сохранить",
-                    tint = if (canSave) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+            // Круглые кнопки: удаление (в редактировании), крестик — отмена, галочка — сохранить
+            if (existing != null) {
+                HeaderIconButton(
+                    onClick = { confirmDelete = true },
+                    filled = false,
+                    content = {
+                        Icon(
+                            Icons.Filled.Delete,
+                            contentDescription = "Удалить карту",
+                            tint = Color(0xFFC65B4E),
+                        )
                     },
                 )
+                Spacer(Modifier.width(8.dp))
             }
+            HeaderIconButton(
+                onClick = { cancel() },
+                filled = false,
+                content = {
+                    Icon(
+                        Icons.Filled.Close,
+                        contentDescription = "Отмена",
+                        tint = MaterialTheme.colorScheme.onSurface,
+                    )
+                },
+            )
+            Spacer(Modifier.width(8.dp))
+            HeaderIconButton(
+                onClick = { saveCard() },
+                filled = true,
+                enabled = canSave,
+                content = {
+                    Icon(
+                        Icons.Filled.Check,
+                        contentDescription = "Сохранить",
+                        tint = if (canSave) {
+                            Color.White
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                    )
+                },
+            )
         }
 
         OutlinedTextField(

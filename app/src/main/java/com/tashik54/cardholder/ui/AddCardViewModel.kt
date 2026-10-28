@@ -8,11 +8,12 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.tashik54.cardholder.data.Card
 import com.tashik54.cardholder.data.CardRepository
 import com.tashik54.cardholder.data.CodeType
+import com.tashik54.cardholder.data.PhotoStore
 import kotlinx.coroutines.launch
 
 class AddCardViewModel(private val repository: CardRepository) : ViewModel() {
 
-    /** Сохраняет карту и вызывает onDone после записи в БД. */
+    /** Сохраняет карту (новую или существующую по cardId) и вызывает onDone. */
     fun save(
         storeName: String,
         codeType: CodeType,
@@ -20,19 +21,36 @@ class AddCardViewModel(private val repository: CardRepository) : ViewModel() {
         barcodeFormat: String? = null,
         frontPhotoPath: String? = null,
         backPhotoPath: String? = null,
+        cardId: Long = 0,
+        createdAt: Long? = null,
         onDone: () -> Unit,
     ) {
         viewModelScope.launch {
-            repository.add(
-                Card(
-                    storeName = storeName.trim(),
-                    codeType = codeType,
-                    codeValue = codeValue.trim(),
-                    barcodeFormat = barcodeFormat,
-                    frontPhotoPath = frontPhotoPath,
-                    backPhotoPath = backPhotoPath,
-                ),
+            val card = Card(
+                id = cardId,
+                storeName = storeName.trim(),
+                codeType = codeType,
+                codeValue = codeValue.trim(),
+                barcodeFormat = barcodeFormat,
+                frontPhotoPath = frontPhotoPath,
+                backPhotoPath = backPhotoPath,
+                createdAt = createdAt ?: System.currentTimeMillis(),
             )
+            if (cardId != 0L) {
+                repository.update(card)
+            } else {
+                repository.add(card)
+            }
+            onDone()
+        }
+    }
+
+    /** Удаляет карту вместе с файлами фото и вызывает onDone. */
+    fun delete(card: Card, onDone: () -> Unit) {
+        viewModelScope.launch {
+            PhotoStore.delete(card.frontPhotoPath)
+            PhotoStore.delete(card.backPhotoPath)
+            repository.delete(card)
             onDone()
         }
     }
