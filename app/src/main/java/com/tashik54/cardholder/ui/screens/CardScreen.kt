@@ -1,8 +1,5 @@
 package com.tashik54.cardholder.ui.screens
 
-import android.content.Context
-import android.content.ContextWrapper
-import android.content.pm.ActivityInfo
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -39,7 +36,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -138,30 +134,43 @@ fun CardScreen(
                 }
             }
 
-            val bitmap = remember(current.id, current.codeValue, current.codeType, current.barcodeFormat) {
-                CodeRenderer.render(current.codeValue, current.codeType, current.barcodeFormat)
-            }
+            if (current.codeValue.isNotBlank()) {
+                val bitmap = remember(current.id, current.codeValue, current.codeType, current.barcodeFormat) {
+                    CodeRenderer.render(current.codeValue, current.codeType, current.barcodeFormat)
+                }
 
-            var codeFullscreen by rememberSaveable { mutableStateOf(false) }
-            CodePanel(bitmap, current, onClick = { codeFullscreen = true })
-            if (codeFullscreen) {
-                FullscreenCodeDialog(
-                    card = current,
-                    onDismiss = { codeFullscreen = false },
+                var codeFullscreen by rememberSaveable { mutableStateOf(false) }
+                CodePanel(bitmap, current, onClick = { codeFullscreen = true })
+                if (codeFullscreen) {
+                    FullscreenCodeDialog(
+                        card = current,
+                        onDismiss = { codeFullscreen = false },
+                    )
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                Text(
+                    text = current.codeValue,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp),
+                )
+            } else {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "Код не указан — карта хранит только фото сторон",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp),
                 )
             }
-
-            Spacer(Modifier.height(16.dp))
-
-            Text(
-                text = current.codeValue,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp),
-            )
 
             // Фото сторон: тап — просмотр на весь экран; подписей нет
             if (current.frontPhotoPath != null || current.backPhotoPath != null) {
@@ -391,23 +400,13 @@ private fun CodePanel(bitmap: Bitmap, card: Card, onClick: () -> Unit = {}) {
 }
 
 /**
- * Код на весь экран в горизонтальной ориентации — крупно для кассового
- * сканера. Тап — закрыть, ориентация возвращается при выходе.
+ * Код на весь экран — крупно для кассового сканера. Тап — закрыть.
  */
 @Composable
 private fun FullscreenCodeDialog(
     card: Card,
     onDismiss: () -> Unit,
 ) {
-    val context = LocalContext.current
-    DisposableEffect(Unit) {
-        val activity = context.findActivity()
-        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-        onDispose {
-            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-        }
-    }
-
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
@@ -446,13 +445,4 @@ private fun FullscreenCodeDialog(
             )
         }
     }
-}
-
-private fun Context.findActivity(): android.app.Activity? {
-    var ctx = this
-    while (ctx is android.content.ContextWrapper) {
-        if (ctx is android.app.Activity) return ctx
-        ctx = ctx.baseContext
-    }
-    return null
 }

@@ -77,6 +77,7 @@ import kotlinx.coroutines.withContext
 fun AddCardScreen(
     modifier: Modifier = Modifier,
     onSaved: () -> Unit,
+    onCancel: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -96,7 +97,15 @@ fun AddCardScreen(
     var pendingCropBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var pendingBarcode by remember { mutableStateOf<Barcode?>(null) }
 
-    val canSave = storeName.isNotBlank() && codeValue.isNotBlank()
+    // Код теперь необязателен: карту можно сохранить только с фото сторон
+    val canSave = storeName.isNotBlank()
+
+    fun cancel() {
+        // Несохранённые фото не должны оставаться файлами-сиротами
+        PhotoStore.delete(frontPhotoPath)
+        PhotoStore.delete(backPhotoPath)
+        onCancel()
+    }
 
     // Тип кода и предпросмотр считаются из текущего значения
     val resolvedType = resolveCodeType(codeValue, detectedFormat)
@@ -326,31 +335,42 @@ fun AddCardScreen(
 
         Spacer(Modifier.weight(1f))
 
-        Button(
-            onClick = {
-                viewModel.save(
-                    storeName = storeName,
-                    codeType = resolvedType,
-                    codeValue = codeValue,
-                    barcodeFormat = detectedFormat?.takeIf { resolvedType != CodeType.QR },
-                    frontPhotoPath = frontPhotoPath,
-                    backPhotoPath = backPhotoPath,
-                    onDone = onSaved,
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            OutlinedButton(
+                onClick = { cancel() },
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(52.dp),
+            ) {
+                Text("Отмена", style = MaterialTheme.typography.titleMedium)
+            }
+            Button(
+                onClick = {
+                    viewModel.save(
+                        storeName = storeName,
+                        codeType = resolvedType,
+                        codeValue = codeValue,
+                        barcodeFormat = detectedFormat?.takeIf { resolvedType != CodeType.QR },
+                        frontPhotoPath = frontPhotoPath,
+                        backPhotoPath = backPhotoPath,
+                        onDone = onSaved,
+                    )
+                },
+                enabled = canSave,
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                ),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(52.dp),
+            ) {
+                Text(
+                    "Сохранить",
+                    style = MaterialTheme.typography.titleMedium,
                 )
-            },
-            enabled = canSave,
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
-        ) {
-            Text(
-                "Сохранить",
-                style = MaterialTheme.typography.titleMedium,
-            )
+            }
         }
         Spacer(Modifier.height(16.dp))
     }

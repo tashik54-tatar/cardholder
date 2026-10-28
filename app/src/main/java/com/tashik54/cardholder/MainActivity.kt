@@ -81,6 +81,7 @@ private fun App() {
             Screen.Add -> AddCardScreen(
                 modifier = Modifier.padding(padding),
                 onSaved = { screen = Screen.Home },
+                onCancel = { screen = Screen.Home },
             )
             Screen.Settings -> SettingsScreen(Modifier.padding(padding))
             is Screen.Detail -> CardScreen(

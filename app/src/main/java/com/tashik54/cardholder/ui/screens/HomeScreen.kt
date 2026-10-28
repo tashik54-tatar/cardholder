@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -83,19 +84,45 @@ private fun CardCell(card: Card, onClick: () -> Unit) {
             .fillMaxWidth()
             .aspectRatio(1.586f), // пропорция банковской карты
     ) {
-        val photo = remember(card.frontPhotoPath) {
+        val front = remember(card.frontPhotoPath) {
             PhotoStore.load(card.frontPhotoPath, maxDim = 512)
         }
-        if (photo != null) {
+        val back = remember(card.backPhotoPath) {
+            PhotoStore.load(card.backPhotoPath, maxDim = 512)
+        }
+        when {
+            // Карты без кода (только фото): обе стороны рядом
+            card.codeValue.isBlank() && (front != null || back != null) -> Row {
+                if (front != null) {
+                    Image(
+                        bitmap = front.asImageBitmap(),
+                        contentDescription = "${card.storeName} — лицевая сторона",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxSize(),
+                    )
+                }
+                if (back != null) {
+                    Image(
+                        bitmap = back.asImageBitmap(),
+                        contentDescription = "${card.storeName} — сторона со штрихкодом",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxSize(),
+                    )
+                }
+            }
             // Есть фото лицевой стороны — показываем только его
-            Image(
-                bitmap = photo.asImageBitmap(),
+            front != null -> Image(
+                bitmap = front.asImageBitmap(),
                 contentDescription = card.storeName,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
             )
-        } else {
-            Column(
+            // Иначе — название магазина
+            else -> Column(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.padding(12.dp),
