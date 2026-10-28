@@ -35,6 +35,21 @@ object BarcodeDecoder {
             }
         }
 
+    /**
+     * Настойчивая расшифровка: если код не найден на снимке как есть,
+     * пробует повороты на 90/180/270 (EXIF мог не сохраниться).
+     */
+    suspend fun decodeBestEffort(context: Context, bitmap: Bitmap): Barcode? {
+        decode(context, bitmap)?.let { return it }
+        val matrix = android.graphics.Matrix()
+        for (angle in listOf(90f, 180f, 270f)) {
+            matrix.postRotate(90f)
+            val rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+            decode(context, rotated)?.let { return it }
+        }
+        return null
+    }
+
     private fun loadBitmap(context: Context, uri: Uri): Bitmap? = try {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             val source = ImageDecoder.createSource(context.contentResolver, uri)

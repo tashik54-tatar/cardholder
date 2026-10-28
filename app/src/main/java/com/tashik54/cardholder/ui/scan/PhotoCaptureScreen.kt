@@ -82,7 +82,8 @@ fun PhotoCaptureScreen(
     val previewView = remember { PreviewView(context) }
     val imageCapture = remember {
         ImageCapture.Builder()
-            .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+            // Максимальное качество: штрихкод должен читаться со снимка
+            .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
             .build()
     }
     var busy by remember { mutableStateOf(false) }

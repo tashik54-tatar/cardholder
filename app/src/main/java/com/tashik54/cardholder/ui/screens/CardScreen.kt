@@ -1,5 +1,8 @@
 package com.tashik54.cardholder.ui.screens
 
+import android.content.Context
+import android.content.ContextWrapper
+import android.content.pm.ActivityInfo
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -36,6 +39,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -138,7 +142,14 @@ fun CardScreen(
                 CodeRenderer.render(current.codeValue, current.codeType, current.barcodeFormat)
             }
 
-            CodePanel(bitmap, current)
+            var codeFullscreen by rememberSaveable { mutableStateOf(false) }
+            CodePanel(bitmap, current, onClick = { codeFullscreen = true })
+            if (codeFullscreen) {
+                FullscreenCodeDialog(
+                    card = current,
+                    onDismiss = { codeFullscreen = false },
+                )
+            }
 
             Spacer(Modifier.height(16.dp))
 
@@ -352,7 +363,7 @@ private fun PhotoViewerDialog(
 }
 
 @Composable
-private fun CodePanel(bitmap: Bitmap, card: Card) {
+private fun CodePanel(bitmap: Bitmap, card: Card, onClick: () -> Unit = {}) {
     val isQr = card.codeType == CodeType.QR
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -373,7 +384,75 @@ private fun CodePanel(bitmap: Bitmap, card: Card) {
                     Color.White,
                     RoundedCornerShape(20.dp),
                 )
-                .padding(16.dp),
+                .padding(16.dp)
+                .clickable(onClick = onClick),
         )
     }
+}
+
+/**
+ * Код на весь экран в горизонтальной ориентации — крупно для кассового
+ * сканера. Тап — закрыть, ориентация возвращается при выходе.
+ */
+@Composable
+private fun FullscreenCodeDialog(
+    card: Card,
+    onDismiss: () -> Unit,
+) {
+    val context = LocalContext.current
+    DisposableEffect(Unit) {
+        val activity = context.findActivity()
+        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        onDispose {
+            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        }
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false,
+        ),
+    ) {
+        val isQr = card.codeType == CodeType.QR
+        val big = remember(card.id, card.codeValue, card.codeType, card.barcodeFormat) {
+            CodeRenderer.render(
+                card.codeValue,
+                card.codeType,
+                card.barcodeFormat,
+                width = if (isQr) 1400 else 1800,
+                height = if (isQr) 1400 else 600,
+            )
+        }
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+                .pointerInput(Unit) {
+                    detectTapGestures(onTap = { onDismiss() })
+                },
+        ) {
+            Image(
+                bitmap = big.asImageBitmap(),
+                contentDescription = "${if (isQr) "QR-код" else "Штрихкод"} карты ${card.storeName}",
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp)
+                    .background(Color.White, RoundedCornerShape(16.dp))
+                    .padding(16.dp),
+            )
+        }
+    }
+}
+
+private fun Context.findActivity(): android.app.Activity? {
+    var ctx = this
+    while (ctx is android.content.ContextWrapper) {
+        if (ctx is android.app.Activity) return ctx
+        ctx = ctx.baseContext
+    }
+    return null
 }

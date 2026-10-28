@@ -120,13 +120,23 @@ fun AddCardScreen(
         val target = side ?: return
         if (cropped != null) {
             scope.launch {
+                // Код не нашёлся на полном кадре — пробуем распознать его на обрезанном
+                var barcode = pendingBarcode
+                if (barcode == null) {
+                    barcode = BarcodeDecoder.decodeBestEffort(context, cropped)
+                }
                 // Фото с кодом всегда считается оборотом, без кода — лицевой
-                val goesToBack = pendingBarcode != null || target == "back"
+                val goesToBack = barcode != null || target == "back"
                 val path = withContext(Dispatchers.IO) { PhotoStore.save(context, cropped) }
                 if (goesToBack) {
                     PhotoStore.delete(backPhotoPath?.takeIf { it != path })
                     backPhotoPath = path
-                    pendingBarcode?.let { applyBarcode(it) }
+                    barcode?.let { applyBarcode(it) }
+                        ?: Toast.makeText(
+                            context,
+                            "Штрихкод на фото не найден — введите код вручную",
+                            Toast.LENGTH_LONG,
+                        ).show()
                 } else {
                     PhotoStore.delete(frontPhotoPath?.takeIf { it != path })
                     frontPhotoPath = path
@@ -149,7 +159,7 @@ fun AddCardScreen(
             onCaptured = { bitmap ->
                 capturingSide = null
                 scope.launch {
-                    pendingBarcode = BarcodeDecoder.decode(context, bitmap)
+                    pendingBarcode = BarcodeDecoder.decodeBestEffort(context, bitmap)
                     pendingCropBitmap = bitmap
                     croppingSide = side
                 }
