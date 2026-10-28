@@ -3,6 +3,7 @@ package com.tashik54.cardholder.ui.scan
 import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -27,11 +28,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,9 +41,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import com.tashik54.cardholder.data.PhotoStore
 import java.io.File
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Съёмка фото стороны карты внутри приложения: живое превью с подсказкой
@@ -80,6 +86,7 @@ fun PhotoCaptureScreen(
             .build()
     }
     var busy by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(hasPermission) {
         if (!hasPermission) return@LaunchedEffect
@@ -108,28 +115,45 @@ fun PhotoCaptureScreen(
             ContextCompat.getMainExecutor(context),
             object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                    val bitmap = PhotoStore.loadCapture(file)
-                    file.delete()
-                    if (bitmap != null) {
-                        onCaptured(bitmap)
-                    } else {
-                        busy = false
+                    scope.launch {
+                        val bitmap = withContext(Dispatchers.IO) { PhotoStore.loadCapture(file) }
+                        file.delete()
+                        if (bitmap != null) {
+                            onCaptured(bitmap)
+                        } else {
+                            busy = false
+                            Toast.makeText(
+                                context,
+                                "Не удалось обработать снимок, попробуйте ещё раз",
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                        }
                     }
                 }
 
                 override fun onError(exception: ImageCaptureException) {
                     file.delete()
                     busy = false
+                    Toast.makeText(context, "Ошибка камеры, попробуйте ещё раз", Toast.LENGTH_SHORT).show()
                 }
             },
         )
     }
 
-    Box(
-        modifier
-            .fillMaxSize()
-            .background(Color.Black),
+    // Полноэкранное окно поверх всего интерфейса: нижнее меню приложения
+    // не перекрывает камеру и не перехватывает касания
+    Dialog(
+        onDismissRequest = onClose,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false,
+        ),
     ) {
+        Box(
+            modifier
+                .fillMaxSize()
+                .background(Color.Black),
+        ) {
         if (hasPermission) {
             AndroidView(factory = { previewView }, modifier = Modifier.fillMaxSize())
         } else {
@@ -180,6 +204,7 @@ fun PhotoCaptureScreen(
                         CircleShape,
                     ),
             )
+        }
         }
     }
 }

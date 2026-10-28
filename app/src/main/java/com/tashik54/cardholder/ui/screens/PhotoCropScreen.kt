@@ -39,6 +39,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import kotlin.math.abs
 
 /**
@@ -55,6 +57,14 @@ fun PhotoCropScreen(
     var rect by remember { mutableStateOf(Rect(0.05f, 0.05f, 0.95f, 0.95f)) }
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
 
+    // Полноэкранное окно: нижнее меню приложения не перехватывает касания
+    Dialog(
+        onDismissRequest = { onDone(null) },
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false,
+        ),
+    ) {
     Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
         Text(
             text = "Обрежьте фото",
@@ -120,6 +130,7 @@ fun PhotoCropScreen(
             ) { Text("Готово") }
         }
         Spacer(Modifier.height(16.dp))
+        }
     }
 }
 

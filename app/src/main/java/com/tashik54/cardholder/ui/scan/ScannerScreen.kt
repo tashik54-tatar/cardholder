@@ -37,6 +37,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
@@ -107,6 +109,14 @@ fun ScannerScreen(
         }, ContextCompat.getMainExecutor(context))
     }
 
+    // Полноэкранное окно: нижнее меню приложения не перехватывает касания
+    Dialog(
+        onDismissRequest = onClose,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false,
+        ),
+    ) {
     Box(
         Modifier
             .fillMaxSize()
@@ -160,5 +170,6 @@ fun ScannerScreen(
                 tint = Color.White,
             )
         }
+    }
     }
 }
