@@ -3,6 +3,10 @@ package com.tashik54.cardholder.ui.screens
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,13 +43,18 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tashik54.cardholder.data.Card
@@ -143,12 +152,30 @@ fun CardScreen(
                     .padding(horizontal = 24.dp),
             )
 
-            // Фото сторон: только просмотр; съёмка — при добавлении карты
+            // Фото сторон: тап — просмотр на весь экран; подписей нет
             if (current.frontPhotoPath != null || current.backPhotoPath != null) {
                 Spacer(Modifier.height(24.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    PhotoView("Лицевая сторона", current.frontPhotoPath, Modifier.weight(1f))
-                    PhotoView("Сторона со штрихкодом", current.backPhotoPath, Modifier.weight(1f))
+                    var viewingPath by remember { mutableStateOf<String?>(null) }
+                    PhotoView(
+                        label = "Лицевая сторона",
+                        path = current.frontPhotoPath,
+                        onClick = { current.frontPhotoPath?.let { viewingPath = it } },
+                        modifier = Modifier.weight(1f),
+                    )
+                    PhotoView(
+                        label = "Сторона со штрихкодом",
+                        path = current.backPhotoPath,
+                        onClick = { current.backPhotoPath?.let { viewingPath = it } },
+                        modifier = Modifier.weight(1f),
+                    )
+                    viewingPath?.let { path ->
+                        PhotoViewerDialog(
+                            label = if (path == current.frontPhotoPath) "Лицевая сторона" else "Сторона со штрихкодом",
+                            path = path,
+                            onDismiss = { viewingPath = null },
+                        )
+                    }
                 }
             }
             Spacer(Modifier.height(24.dp))
@@ -234,32 +261,93 @@ private fun EditBar(
 }
 
 @Composable
-private fun PhotoView(label: String, path: String?, modifier: Modifier = Modifier) {
+private fun PhotoView(
+    label: String,
+    path: String?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val photo = remember(path) { PhotoStore.load(path, maxDim = 512) }
     if (photo != null) {
-        Column(
-            modifier = modifier,
-            horizontalAlignment = Alignment.CenterHorizontally,
+        Image(
+            bitmap = photo.asImageBitmap(),
+            contentDescription = label,
+            contentScale = ContentScale.Crop,
+            modifier = modifier
+                .aspectRatio(1.586f)
+                .background(Color.White, RoundedCornerShape(16.dp))
+                .clickable(onClick = onClick),
+        )
+    } else {
+        Box(modifier)
+    }
+}
+
+/**
+ * Просмотр фото на весь экран: чёрный фон, картинка целиком,
+ * масштабирование щипком, тап — закрыть.
+ */
+@Composable
+private fun PhotoViewerDialog(
+    label: String,
+    path: String,
+    onDismiss: () -> Unit,
+) {
+    val photo = remember(path) { PhotoStore.load(path, maxDim = 2048) } ?: return
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false,
+        ),
+    ) {
+        var scale by remember { mutableStateOf(1f) }
+        var offset by remember { mutableStateOf(Offset.Zero) }
+        val transformState = rememberTransformableState { zoomChange, panChange, _ ->
+            scale = (scale * zoomChange).coerceIn(1f, 5f)
+            offset = if (scale > 1f) offset + panChange else Offset.Zero
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+                .pointerInput(Unit) {
+                    detectTapGestures(onTap = { onDismiss() }, onDoubleTap = {
+                        scale = if (scale > 1f) 1f else 2.5f
+                        offset = Offset.Zero
+                    })
+                },
+            contentAlignment = Alignment.Center,
         ) {
             Image(
                 bitmap = photo.asImageBitmap(),
                 contentDescription = label,
-                contentScale = ContentScale.Crop,
+                contentScale = ContentScale.Fit,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1.586f)
-                    .background(Color.White, RoundedCornerShape(16.dp)),
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                        translationX = offset.x
+                        translationY = offset.y
+                    }
+                    .transformable(transformState),
             )
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 4.dp),
-            )
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(12.dp),
+            ) {
+                Icon(
+                    Icons.Filled.Close,
+                    contentDescription = "Закрыть",
+                    tint = Color.White,
+                )
+            }
         }
-    } else {
-        Box(modifier)
     }
 }
 

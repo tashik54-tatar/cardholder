@@ -60,7 +60,6 @@ import com.tashik54.cardholder.data.barcodeFormatName
 import com.tashik54.cardholder.data.resolveCodeType
 import com.tashik54.cardholder.ui.AddCardViewModel
 import com.tashik54.cardholder.ui.scan.PhotoCaptureScreen
-import com.tashik54.cardholder.ui.scan.ScannerScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -90,7 +89,6 @@ fun AddCardScreen(
     var frontPhotoPath by rememberSaveable { mutableStateOf<String?>(null) }
     var backPhotoPath by rememberSaveable { mutableStateOf<String?>(null) }
 
-    var scanning by rememberSaveable { mutableStateOf(false) }
     // Какую сторону снимаем: "front" / "back"
     var capturingSide by rememberSaveable { mutableStateOf<String?>(null) }
     // Стадия после снимка: обрезка фото
@@ -138,17 +136,6 @@ fun AddCardScreen(
         pendingBarcode = null
         pendingCropBitmap = null
         croppingSide = null
-    }
-
-    if (scanning) {
-        ScannerScreen(
-            onDetected = { barcode ->
-                scanning = false
-                applyBarcode(barcode)
-            },
-            onClose = { scanning = false },
-        )
-        return
     }
 
     // Съёмка стороны карты в окне камеры приложения, с подсказкой
@@ -313,28 +300,18 @@ fun AddCardScreen(
 
         Spacer(Modifier.height(16.dp))
 
-        // Код можно ввести и без фото: из файла или живым сканом
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(
-                onClick = {
-                    pickImage.launch(
-                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
-                    )
-                },
-                shape = RoundedCornerShape(16.dp),
-            ) {
-                Icon(Icons.Filled.Folder, contentDescription = null)
-                Spacer(Modifier.padding(start = 6.dp))
-                Text("Код из файла")
-            }
-            OutlinedButton(
-                onClick = { scanning = true },
-                shape = RoundedCornerShape(16.dp),
-            ) {
-                Icon(Icons.Filled.PhotoCamera, contentDescription = null)
-                Spacer(Modifier.padding(start = 6.dp))
-                Text("Сканировать")
-            }
+        // Код можно ввести и без фото — расшифровать его из файла с картинкой
+        OutlinedButton(
+            onClick = {
+                pickImage.launch(
+                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+                )
+            },
+            shape = RoundedCornerShape(16.dp),
+        ) {
+            Icon(Icons.Filled.Folder, contentDescription = null)
+            Spacer(Modifier.padding(start = 6.dp))
+            Text("Код из файла")
         }
 
         Spacer(Modifier.weight(1f))
