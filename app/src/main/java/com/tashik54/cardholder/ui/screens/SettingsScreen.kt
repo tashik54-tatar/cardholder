@@ -1,5 +1,9 @@
 package com.tashik54.cardholder.ui.screens
 
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,17 +19,71 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.tashik54.cardholder.data.CardRepository
+import com.tashik54.cardholder.data.CsvCodec
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
- * Настройки. Импорт/экспорт CSV заработает на этапе v0.8 —
- * пока пункты отображаются иконками-стрелочками без действия.
+ * Настройки: экспорт карт в CSV-файл (резервная копия) и импорт обратно.
+ * Фото сторон в CSV не переносятся — только данные карты.
  */
 @Composable
 fun SettingsScreen(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val repository = remember { CardRepository.from(context) }
+
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("text/csv"),
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            val cards = repository.observeAll().first()
+            val csv = CsvCodec.export(cards)
+            val ok = withContext(Dispatchers.IO) {
+                runCatching {
+                    context.contentResolver.openOutputStream(uri)?.use { out ->
+                        out.write(csv.toByteArray(Charsets.UTF_8))
+                    } != null
+                }.getOrDefault(false)
+            }
+            Toast.makeText(
+                context,
+                if (ok) "Экспортировано карт: ${cards.size}" else "Не удалось сохранить файл",
+                Toast.LENGTH_SHORT,
+            ).show()
+        }
+    }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            val result = importCsv(context, uri, repository)
+            val message = buildString {
+                append("Импортировано карт: ${result.imported}")
+                if (result.skippedRows > 0) append(", пропущено строк: ${result.skippedRows}")
+            }
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        }
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -37,18 +95,51 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(top = 16.dp, bottom = 24.dp),
         )
 
-        SettingsRow(icon = Icons.Filled.KeyboardArrowDown, title = "Импорт CSV")
-        SettingsRow(icon = Icons.Filled.KeyboardArrowUp, title = "Экспорт CSV")
+        SettingsRow(icon = Icons.Filled.KeyboardArrowDown, title = "Импорт CSV") {
+            importLauncher.launch(arrayOf("text/csv", "text/comma-separated-values", "text/plain"))
+        }
+        SettingsRow(icon = Icons.Filled.KeyboardArrowUp, title = "Экспорт CSV") {
+            val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+            exportLauncher.launch("my-cards-$date.csv")
+        }
+
+        Spacer(Modifier.padding(top = 16.dp))
+        Text(
+            text = "CSV переносит данные карт (название, тип и значение кода). " +
+                "Фото сторон остаются только в приложении.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
+private data class ImportSummary(val imported: Int, val skippedRows: Int)
+
+private suspend fun importCsv(
+    context: android.content.Context,
+    uri: Uri,
+    repository: CardRepository,
+): ImportSummary = withContext(Dispatchers.IO) {
+    val text = runCatching {
+        context.contentResolver.openInputStream(uri)?.use { input ->
+            input.readBytes().toString(Charsets.UTF_8)
+        }
+    }.getOrNull() ?: return@withContext ImportSummary(0, 0)
+
+    val parsed = CsvCodec.parse(text)
+    for (card in parsed.cards) {
+        repository.add(card)
+    }
+    ImportSummary(parsed.cards.size, parsed.skippedRows)
+}
+
 @Composable
-private fun SettingsRow(icon: ImageVector, title: String) {
+private fun SettingsRow(icon: ImageVector, title: String, onClick: () -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { /* действие добавим на этапе v0.8 */ }
+            .clickable(onClick = onClick)
             .padding(vertical = 14.dp),
     ) {
         Icon(
