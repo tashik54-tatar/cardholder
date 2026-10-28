@@ -4,6 +4,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
@@ -72,23 +77,31 @@ private fun App() {
         containerColor = Color.Transparent,
         bottomBar = { BottomBar(screen, onSelect = { screen = it }) },
     ) { padding ->
-        when (val s = screen) {
-            Screen.Home -> HomeScreen(
-                cards = cards,
-                modifier = Modifier.padding(padding),
-                onCardClick = { screen = Screen.Detail(it.id) },
-            )
-            Screen.Add -> AddCardScreen(
-                modifier = Modifier.padding(padding),
-                onSaved = { screen = Screen.Home },
-                onCancel = { screen = Screen.Home },
-            )
-            Screen.Settings -> SettingsScreen(Modifier.padding(padding))
-            is Screen.Detail -> CardScreen(
-                cardId = s.cardId,
-                modifier = Modifier.padding(padding),
-                onBack = { screen = Screen.Home },
-            )
+        AnimatedContent(
+            targetState = screen,
+            transitionSpec = {
+                fadeIn(animationSpec = tween(220)) togetherWith fadeOut(animationSpec = tween(180))
+            },
+            label = "screen",
+        ) { s ->
+            when (s) {
+                Screen.Home -> HomeScreen(
+                    cards = cards,
+                    modifier = Modifier.padding(padding),
+                    onCardClick = { screen = Screen.Detail(it.id) },
+                )
+                Screen.Add -> AddCardScreen(
+                    modifier = Modifier.padding(padding),
+                    onSaved = { screen = Screen.Home },
+                    onCancel = { screen = Screen.Home },
+                )
+                Screen.Settings -> SettingsScreen(Modifier.padding(padding))
+                is Screen.Detail -> CardScreen(
+                    cardId = s.cardId,
+                    modifier = Modifier.padding(padding),
+                    onBack = { screen = Screen.Home },
+                )
+            }
         }
     }
 }
@@ -96,7 +109,7 @@ private fun App() {
 /** Нижнее меню: «+» (добавить карту) и «⚙» (настройки). */
 @Composable
 private fun BottomBar(current: Screen, onSelect: (Screen) -> Unit) {
-    NavigationBar(containerColor = Color.White.copy(alpha = 0.6f)) {
+    NavigationBar(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.6f)) {
         BottomItem(Icons.Filled.Add, "Добавить", current is Screen.Add) { onSelect(Screen.Add) }
         BottomItem(Icons.Filled.Settings, "Настройки", current is Screen.Settings) { onSelect(Screen.Settings) }
     }

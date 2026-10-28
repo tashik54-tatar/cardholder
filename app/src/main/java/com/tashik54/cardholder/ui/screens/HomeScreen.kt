@@ -68,19 +68,23 @@ fun HomeScreen(
         modifier = modifier.fillMaxSize(),
     ) {
         items(cards, key = { it.id }) { card ->
-            CardCell(card, onClick = { onCardClick(card) })
+            CardCell(
+                card = card,
+                onClick = { onCardClick(card) },
+                modifier = Modifier.animateItem(),
+            )
         }
     }
 }
 
 @Composable
-private fun CardCell(card: Card, onClick: () -> Unit) {
+private fun CardCell(card: Card, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
         shadowElevation = 1.dp,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .aspectRatio(1.586f), // пропорция банковской карты
     ) {

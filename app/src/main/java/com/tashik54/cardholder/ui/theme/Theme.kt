@@ -1,19 +1,30 @@
 package com.tashik54.cardholder.ui.theme
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import com.tashik54.cardholder.R
+import kotlin.random.Random
 
 // Inter — ближайший свободный аналог SF Pro (шрифт «hello» при загрузке macOS).
 // InterDisplay — «дисплейное» начертание для заголовков, Inter — для текста.
@@ -50,14 +61,17 @@ private fun Typography.withInter(): Typography = copy(
 )
 
 // Пастельный градиент в духе фонов Telegram
-private val GradientColors = listOf(
+private val LightGradientColors = listOf(
     Color(0xFFDDE9FF), // нежно-голубой
     Color(0xFFE8DDFF), // лавандовый
     Color(0xFFFFE3EE), // розовый
 )
 
-@Composable
-fun AppGradientBrush(): Brush = Brush.verticalGradient(GradientColors)
+private val DarkGradientColors = listOf(
+    Color(0xFF181C2C), // тёмно-синий
+    Color(0xFF221A30), // тёмно-лиловый
+    Color(0xFF2A1D26), // тёмно-розовый
+)
 
 private val LightScheme = lightColorScheme(
     primary = Color(0xFF5C6BC0),
@@ -69,16 +83,32 @@ private val LightScheme = lightColorScheme(
     background = Color.Transparent,
 )
 
+private val DarkScheme = darkColorScheme(
+    primary = Color(0xFF9FA8DA),
+    onPrimary = Color(0xFF191A2C),
+    secondary = Color(0xFFB39DDB),
+    surface = Color(0xFF24253A),
+    onSurface = Color(0xFFE7E7F2),
+    onSurfaceVariant = Color(0xFFABABC0),
+    background = Color.Transparent,
+)
+
+@Composable
+fun AppGradientBrush(): Brush = Brush.verticalGradient(
+    if (isSystemInDarkTheme()) DarkGradientColors else LightGradientColors,
+)
+
 @Composable
 fun CardHolderTheme(content: @Composable () -> Unit) {
+    val dark = isSystemInDarkTheme()
     MaterialTheme(
-        colorScheme = LightScheme,
+        colorScheme = if (dark) DarkScheme else LightScheme,
         typography = InterTypography,
         content = content,
     )
 }
 
-/** Фон приложения: градиент на весь экран под всем контентом. */
+/** Фон приложения: градиент на весь экран + полупрозрачный узор (стиль Telegram). */
 @Composable
 fun GradientBackground(content: @Composable () -> Unit) {
     Box(
@@ -86,6 +116,53 @@ fun GradientBackground(content: @Composable () -> Unit) {
             .fillMaxSize()
             .background(AppGradientBrush()),
     ) {
+        PatternOverlay(Modifier.fillMaxSize())
         content()
     }
+}
+
+/**
+ * Повторяющийся полупрозрачный узор из «карт» и кружков, как на фоне
+ * чатов Telegram. Раскладка детерминированная (фиксированное зерно),
+ * чтобы фон не «прыгал» между экранами.
+ */
+@Composable
+private fun PatternOverlay(modifier: Modifier = Modifier) {
+    val dark = isSystemInDarkTheme()
+    val shapeColor = if (dark) Color.White.copy(alpha = 0.045f) else Color.White.copy(alpha = 0.09f)
+    val density = LocalDensity.current
+
+    Canvas(modifier) {
+        val cell = with(density) { 110.dp.toPx() }
+        val cols = (size.width / cell).toInt() + 1
+        val rows = (size.height / cell).toInt() + 1
+        val rnd = Random(7)
+
+        for (row in 0 until rows) {
+            for (col in 0 until cols) {
+                val x = (col * cell + rnd.nextFloat() * cell * 0.6f) - cell * 0.3f
+                val y = (row * cell + rnd.nextFloat() * cell * 0.6f) - cell * 0.3f
+                val rotation = rnd.nextFloat() * 50f - 25f
+                val shape = rnd.nextInt(3)
+                rotate(rotation, pivot = Offset(x, y)) {
+                    when (shape) {
+                        0 -> drawCardShape(x, y, cell, shapeColor)
+                        1 -> drawCircle(shapeColor, radius = cell * 0.16f, center = Offset(x, y))
+                        else -> drawCardShape(x, y, cell, shapeColor)
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun DrawScope.drawCardShape(x: Float, y: Float, cell: Float, color: Color) {
+    val w = cell * 0.5f
+    val h = w / 1.586f // пропорция банковской карты
+    drawRoundRect(
+        color = color,
+        topLeft = Offset(x - w / 2, y - h / 2),
+        size = Size(w, h),
+        cornerRadius = CornerRadius(h * 0.18f),
+    )
 }

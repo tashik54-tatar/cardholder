@@ -295,7 +295,7 @@ private fun PhotoView(
             contentScale = ContentScale.Crop,
             modifier = modifier
                 .aspectRatio(1.586f)
-                .background(Color.White, RoundedCornerShape(16.dp))
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
                 .clickable(onClick = onClick),
         )
     } else {

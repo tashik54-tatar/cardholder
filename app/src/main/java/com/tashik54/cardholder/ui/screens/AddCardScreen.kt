@@ -5,6 +5,12 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -63,6 +69,10 @@ import com.tashik54.cardholder.ui.scan.PhotoCaptureScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
+// Полупрозрачные подложки полей и плиток — цвета темы (работают в обеих темах)
+private val PanelColor: Color @Composable get() = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
+private val PanelColorDim: Color @Composable get() = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
 
 /**
  * Форма новой карты: название магазина, фото сторон и значение кода.
@@ -220,8 +230,8 @@ fun AddCardScreen(
             singleLine = true,
             shape = RoundedCornerShape(16.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = Color.White.copy(alpha = 0.7f),
-                unfocusedContainerColor = Color.White.copy(alpha = 0.5f),
+                focusedContainerColor = PanelColor,
+                unfocusedContainerColor = PanelColorDim,
             ),
             modifier = Modifier.fillMaxWidth(),
         )
@@ -277,42 +287,48 @@ fun AddCardScreen(
             label = { Text("Значение кода (номер карты или ссылка)") },
             shape = RoundedCornerShape(16.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = Color.White.copy(alpha = 0.7f),
-                unfocusedContainerColor = Color.White.copy(alpha = 0.5f),
+                focusedContainerColor = PanelColor,
+                unfocusedContainerColor = PanelColorDim,
             ),
             modifier = Modifier.fillMaxWidth(),
         )
 
         // Предпросмотр: код картинкой сразу видно, что именно сохранится
-        if (previewBitmap != null) {
-            Spacer(Modifier.height(12.dp))
+        AnimatedVisibility(
+            visible = previewBitmap != null,
+            enter = fadeIn(tween(200)) + expandVertically(tween(200)),
+            exit = fadeOut(tween(150)) + shrinkVertically(tween(150)),
+        ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Image(
-                    bitmap = previewBitmap.asImageBitmap(),
-                    contentDescription = "Предпросмотр кода",
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .then(
-                            if (resolvedType == CodeType.QR) {
-                                Modifier.aspectRatio(1f)
-                            } else {
-                                Modifier.height(120.dp)
-                            },
-                        )
-                        .background(Color.White, RoundedCornerShape(16.dp))
-                        .padding(12.dp),
-                )
-                if (detectedFormat != null) {
-                    Text(
-                        text = "Код распознан: $detectedFormat",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(top = 6.dp),
+                val shown = previewBitmap
+                if (shown != null) {
+                    Image(
+                        bitmap = shown.asImageBitmap(),
+                        contentDescription = "Предпросмотр кода",
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .then(
+                                if (resolvedType == CodeType.QR) {
+                                    Modifier.aspectRatio(1f)
+                                } else {
+                                    Modifier.height(120.dp)
+                                },
+                            )
+                            .background(Color.White, RoundedCornerShape(16.dp))
+                            .padding(12.dp),
                     )
+                    if (detectedFormat != null) {
+                        Text(
+                            text = "Код распознан: $detectedFormat",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(top = 6.dp),
+                        )
+                    }
                 }
             }
         }
@@ -395,7 +411,7 @@ private fun PhotoSlot(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(1.586f)
-                .background(Color.White.copy(alpha = 0.6f), RoundedCornerShape(16.dp))
+                .background(PanelColorDim, RoundedCornerShape(16.dp))
                 .clickable(onClick = onShoot),
         ) {
             val photo = remember(photoPath) { PhotoStore.load(photoPath, maxDim = 512) }
@@ -424,7 +440,7 @@ private fun PhotoSlot(
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .background(Color.White.copy(alpha = 0.75f))
+                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.75f))
                         .fillMaxWidth()
                         .padding(vertical = 4.dp),
                 )
