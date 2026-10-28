@@ -1,0 +1,24 @@
+# Gradle
+.gradle/
+build/
+
+# Android Studio / IntelliJ
+*.iml
+.idea/
+captures/
+local.properties
+
+# Kotlin
+.kotlin/
+
+# NDK
+.externalNativeBuild/
+.cxx/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Keystore (не храним подписи в репозитории)
+*.jks
+*.keystore
