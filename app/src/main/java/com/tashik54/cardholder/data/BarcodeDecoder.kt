@@ -18,16 +18,22 @@ object BarcodeDecoder {
 
     suspend fun decode(context: Context, uri: Uri): Barcode? = withContext(Dispatchers.IO) {
         val bitmap = loadBitmap(context, uri) ?: return@withContext null
-        val image = InputImage.fromBitmap(bitmap, 0)
-        val scanner = BarcodeScanning.getClient(allFormatsOptions())
-        try {
-            Tasks.await(scanner.process(image)).firstOrNull()
-        } catch (_: Exception) {
-            null
-        } finally {
-            scanner.close()
-        }
+        decode(context, bitmap)
     }
+
+    /** Расшифровка кода с готового снимка (фото стороны карты). */
+    suspend fun decode(context: Context, bitmap: Bitmap, rotationDegrees: Int = 0): Barcode? =
+        withContext(Dispatchers.IO) {
+            val image = InputImage.fromBitmap(bitmap, rotationDegrees)
+            val scanner = BarcodeScanning.getClient(allFormatsOptions())
+            try {
+                Tasks.await(scanner.process(image)).firstOrNull()
+            } catch (_: Exception) {
+                null
+            } finally {
+                scanner.close()
+            }
+        }
 
     private fun loadBitmap(context: Context, uri: Uri): Bitmap? = try {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {

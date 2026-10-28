@@ -7,6 +7,7 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,28 +47,32 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.tashik54.cardholder.data.BarcodeDecoder
 import com.tashik54.cardholder.data.CardRepository
 import com.tashik54.cardholder.data.CodeRenderer
+import com.tashik54.cardholder.data.CodeType
 import com.tashik54.cardholder.data.PhotoStore
 import com.tashik54.cardholder.data.barcodeFormatName
 import com.tashik54.cardholder.data.resolveCodeType
 import com.tashik54.cardholder.ui.AddCardViewModel
+import com.tashik54.cardholder.ui.scan.PhotoCaptureScreen
 import com.tashik54.cardholder.ui.scan.ScannerScreen
-import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * Форма новой карты: название магазина, значение кода и фото сторон.
- * Тип кода не выбирается вручную: сканер/распознавание из файла
- * определяют формат сами, при ручном вводе тип угадывается по значению.
- * Как только значение введено, код сразу показывается картинкой.
+ * Форма новой карты: название магазина, фото сторон и значение кода.
+ *
+ * Фото: две плитки — лицевая сторона и сторона со штрихкодом. Тап открывает
+ * камеру с подсказкой; после снимка возвращаемся в форму, где программа
+ * сама распознала штрихкод (и сама поняла, какая сторона где: фото с кодом —
+ * оборот, без кода — лицевая). Повторный тап по плитке переснимает сторону,
+ * старое фото заменяется. Тип кода не выбирается вручную.
  */
 @Composable
 fun AddCardScreen(
@@ -86,11 +91,12 @@ fun AddCardScreen(
     var backPhotoPath by rememberSaveable { mutableStateOf<String?>(null) }
 
     var scanning by rememberSaveable { mutableStateOf(false) }
-    // "front" / "back" — какая сторона сейчас снимается или обрезается
+    // Какую сторону снимаем: "front" / "back"
     var capturingSide by rememberSaveable { mutableStateOf<String?>(null) }
+    // Стадия после снимка: обрезка фото
     var croppingSide by rememberSaveable { mutableStateOf<String?>(null) }
     var pendingCropBitmap by remember { mutableStateOf<Bitmap?>(null) }
-    var captureFile by remember { mutableStateOf<File?>(null) }
+    var pendingBarcode by remember { mutableStateOf<Barcode?>(null) }
 
     val canSave = storeName.isNotBlank() && codeValue.isNotBlank()
 
@@ -111,18 +117,27 @@ fun AddCardScreen(
         detectedFormat = barcodeFormatName(barcode.format)
     }
 
-    fun onPhotoTaken(file: File) {
-        scope.launch {
-            val bitmap = withContext(Dispatchers.IO) { PhotoStore.loadFromUri(context, uriOf(context, file)) }
-            if (bitmap == null) {
-                Toast.makeText(context, "Не удалось открыть снимок", Toast.LENGTH_SHORT).show()
-            } else {
-                pendingCropBitmap = bitmap
-                croppingSide = capturingSide
+    // После обрезки: фото — на своё место (старое заменяется), код — в форму
+    fun onCropDone(side: String?, cropped: Bitmap?) {
+        val target = side ?: return
+        if (cropped != null) {
+            scope.launch {
+                // Фото с кодом всегда считается оборотом, без кода — лицевой
+                val goesToBack = pendingBarcode != null || target == "back"
+                val path = withContext(Dispatchers.IO) { PhotoStore.save(context, cropped) }
+                if (goesToBack) {
+                    PhotoStore.delete(backPhotoPath?.takeIf { it != path })
+                    backPhotoPath = path
+                    pendingBarcode?.let { applyBarcode(it) }
+                } else {
+                    PhotoStore.delete(frontPhotoPath?.takeIf { it != path })
+                    frontPhotoPath = path
+                }
             }
-            file.delete()
-            capturingSide = null
         }
+        pendingBarcode = null
+        pendingCropBitmap = null
+        croppingSide = null
     }
 
     if (scanning) {
@@ -136,38 +151,32 @@ fun AddCardScreen(
         return
     }
 
-    // Съёмка стороны карты штатной камерой
-    val takePicture = rememberLauncherForActivityResult(
-        ActivityResultContracts.TakePicture(),
-    ) { ok ->
-        val file = captureFile
-        if (ok && file != null) onPhotoTaken(file) else capturingSide = null
+    // Съёмка стороны карты в окне камеры приложения, с подсказкой
+    capturingSide?.let { side ->
+        PhotoCaptureScreen(
+            instruction = if (side == "front") {
+                "Сфотографируйте лицевую сторону карты"
+            } else {
+                "Сфотографируйте сторону со штрихкодом"
+            },
+            onCaptured = { bitmap ->
+                capturingSide = null
+                scope.launch {
+                    pendingBarcode = BarcodeDecoder.decode(context, bitmap)
+                    pendingCropBitmap = bitmap
+                    croppingSide = side
+                }
+            },
+            onClose = { capturingSide = null },
+        )
+        return
     }
 
-    fun startCapture(side: String) {
-        capturingSide = side
-        val file = PhotoStore.newCaptureFile(context)
-        captureFile = file
-        takePicture.launch(uriOf(context, file))
-    }
-
-    // Экран обрезки снимка
-    if (croppingSide != null) {
+    // Обрезка снимка
+    croppingSide?.let { side ->
         PhotoCropScreen(
             bitmap = pendingCropBitmap ?: Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888),
-            onDone = { cropped ->
-                val side = croppingSide
-                if (cropped != null && side != null) {
-                    scope.launch {
-                        val path = withContext(Dispatchers.IO) { PhotoStore.save(context, cropped) }
-                        if (side == "front") PhotoStore.delete(frontPhotoPath)
-                        else PhotoStore.delete(backPhotoPath)
-                        if (side == "front") frontPhotoPath = path else backPhotoPath = path
-                    }
-                }
-                pendingCropBitmap = null
-                croppingSide = null
-            },
+            onDone = { cropped -> onCropDone(side, cropped) },
         )
         return
     }
@@ -211,7 +220,46 @@ fun AddCardScreen(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(20.dp))
+
+        Text(
+            text = "Фото сторон",
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            PhotoSlot(
+                label = "Лицевая сторона",
+                hint = "Сфотографировать лицевую",
+                photoPath = frontPhotoPath,
+                onShoot = { capturingSide = "front" },
+                onClear = {
+                    PhotoStore.delete(frontPhotoPath)
+                    frontPhotoPath = null
+                },
+                modifier = Modifier.weight(1f),
+            )
+            PhotoSlot(
+                label = "Сторона со штрихкодом",
+                hint = "Сфотографировать штрихкод",
+                photoPath = backPhotoPath,
+                onShoot = { capturingSide = "back" },
+                onClear = {
+                    PhotoStore.delete(backPhotoPath)
+                    backPhotoPath = null
+                },
+                modifier = Modifier.weight(1f),
+            )
+        }
+        Text(
+            text = "Штрихкод с фото распознаётся автоматически",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 6.dp),
+        )
+
+        Spacer(Modifier.height(20.dp))
 
         OutlinedTextField(
             value = codeValue,
@@ -243,7 +291,7 @@ fun AddCardScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .then(
-                            if (resolvedType == com.tashik54.cardholder.data.CodeType.QR) {
+                            if (resolvedType == CodeType.QR) {
                                 Modifier.aspectRatio(1f)
                             } else {
                                 Modifier.height(120.dp)
@@ -265,12 +313,7 @@ fun AddCardScreen(
 
         Spacer(Modifier.height(16.dp))
 
-        Text(
-            text = "Считать код",
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(8.dp))
+        // Код можно ввести и без фото: из файла или живым сканом
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(
                 onClick = {
@@ -282,7 +325,7 @@ fun AddCardScreen(
             ) {
                 Icon(Icons.Filled.Folder, contentDescription = null)
                 Spacer(Modifier.padding(start = 6.dp))
-                Text("Из файла")
+                Text("Код из файла")
             }
             OutlinedButton(
                 onClick = { scanning = true },
@@ -290,42 +333,11 @@ fun AddCardScreen(
             ) {
                 Icon(Icons.Filled.PhotoCamera, contentDescription = null)
                 Spacer(Modifier.padding(start = 6.dp))
-                Text("Камера")
+                Text("Сканировать")
             }
         }
 
-        Spacer(Modifier.height(24.dp))
-
-        Text(
-            text = "Фото сторон",
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            PhotoSlot(
-                label = "Лицевая",
-                photoPath = frontPhotoPath,
-                onShoot = { startCapture("front") },
-                onClear = {
-                    PhotoStore.delete(frontPhotoPath)
-                    frontPhotoPath = null
-                },
-                modifier = Modifier.weight(1f),
-            )
-            PhotoSlot(
-                label = "Оборотная",
-                photoPath = backPhotoPath,
-                onShoot = { startCapture("back") },
-                onClear = {
-                    PhotoStore.delete(backPhotoPath)
-                    backPhotoPath = null
-                },
-                modifier = Modifier.weight(1f),
-            )
-        }
-
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.weight(1f))
 
         Button(
             onClick = {
@@ -333,7 +345,7 @@ fun AddCardScreen(
                     storeName = storeName,
                     codeType = resolvedType,
                     codeValue = codeValue,
-                    barcodeFormat = detectedFormat?.takeIf { resolvedType != com.tashik54.cardholder.data.CodeType.QR },
+                    barcodeFormat = detectedFormat?.takeIf { resolvedType != CodeType.QR },
                     frontPhotoPath = frontPhotoPath,
                     backPhotoPath = backPhotoPath,
                     onDone = onSaved,
@@ -357,13 +369,14 @@ fun AddCardScreen(
     }
 }
 
-private fun uriOf(context: android.content.Context, file: File) =
-    FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-
-/** Слот фото стороны: превью, кнопка съёмки, кнопка удаления. */
+/**
+ * Плитка стороны карты: превью фото или заглушка. Тап по любой —
+ * переснять сторону (старое фото заменится), крестик — убрать фото.
+ */
 @Composable
 private fun PhotoSlot(
     label: String,
+    hint: String,
     photoPath: String?,
     onShoot: () -> Unit,
     onClear: () -> Unit,
@@ -375,7 +388,8 @@ private fun PhotoSlot(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(1.586f)
-                .background(Color.White.copy(alpha = 0.6f), RoundedCornerShape(16.dp)),
+                .background(Color.White.copy(alpha = 0.6f), RoundedCornerShape(16.dp))
+                .clickable(onClick = onShoot),
         ) {
             val photo = remember(photoPath) { PhotoStore.load(photoPath, maxDim = 512) }
             if (photo != null) {
@@ -385,26 +399,53 @@ private fun PhotoSlot(
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize(),
                 )
-                IconButton(onClick = onClear, modifier = Modifier.align(Alignment.TopEnd)) {
+                IconButton(
+                    onClick = onClear,
+                    modifier = Modifier.align(Alignment.TopEnd),
+                ) {
                     Icon(
                         Icons.Filled.Close,
                         contentDescription = "Убрать фото",
                         tint = Color(0xFF1C1B22),
                     )
                 }
-            } else {
+                // Подсказка про повторный тап
                 Text(
-                    text = label,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = "Нажмите, чтобы заменить",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color(0xFF1C1B22),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .background(Color.White.copy(alpha = 0.75f))
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
                 )
+            } else {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(12.dp),
+                ) {
+                    Icon(
+                        Icons.Filled.PhotoCamera,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        text = hint,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                    )
+                }
             }
         }
-        Spacer(Modifier.height(6.dp))
-        OutlinedButton(onClick = onShoot, shape = RoundedCornerShape(12.dp)) {
-            Icon(Icons.Filled.PhotoCamera, contentDescription = null)
-            Spacer(Modifier.padding(start = 6.dp))
-            Text(if (photoPath == null) "Снять" else "Заменить")
-        }
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 4.dp),
+        )
     }
 }

@@ -13,8 +13,16 @@ android {
         applicationId = "com.tashik54.cardholder"
         minSdk = 26
         targetSdk = 34
-        versionCode = 7
-        versionName = "0.7"
+        versionCode = 8
+        versionName = "0.7.1"
+    }
+
+    // Имя APK с версией: MyCards-v0.7.1-debug.apk
+    applicationVariants.all {
+        outputs.all {
+            (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl).outputFileName =
+                "MyCards-v${defaultConfig.versionName}-${name}.apk"
+        }
     }
 
     buildTypes {
@@ -62,6 +70,7 @@ dependencies {
     implementation(libs.androidx.camera.view)
     implementation(libs.mlkit.barcode.scanning)
     implementation(libs.zxing.core)
+    implementation(libs.androidx.exifinterface)
 
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)

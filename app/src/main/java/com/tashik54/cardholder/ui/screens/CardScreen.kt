@@ -1,10 +1,9 @@
 package com.tashik54.cardholder.ui.screens
 
 import android.graphics.Bitmap
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,7 +23,6 @@ import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -41,7 +39,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tashik54.cardholder.data.Card
@@ -50,7 +47,7 @@ import com.tashik54.cardholder.data.CodeType
 import com.tashik54.cardholder.data.CodeRenderer
 import com.tashik54.cardholder.data.PhotoStore
 import com.tashik54.cardholder.ui.CardDetailViewModel
-import java.io.File
+import com.tashik54.cardholder.ui.scan.PhotoCaptureScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -80,7 +77,6 @@ fun CardScreen(
     var capturingSide by rememberSaveable { mutableStateOf<String?>(null) }
     var croppingSide by rememberSaveable { mutableStateOf<String?>(null) }
     var pendingCropBitmap by remember { mutableStateOf<Bitmap?>(null) }
-    var captureFile by remember { mutableStateOf<File?>(null) }
 
     fun savePhoto(side: String, bitmap: Bitmap) {
         scope.launch {
@@ -93,32 +89,21 @@ fun CardScreen(
         }
     }
 
-    fun onPhotoTaken(file: File) {
-        scope.launch {
-            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-            val bitmap = withContext(Dispatchers.IO) { PhotoStore.loadFromUri(context, uri) }
-            if (bitmap == null) {
-                capturingSide = null
+    capturingSide?.let { side ->
+        PhotoCaptureScreen(
+            instruction = if (side == "front") {
+                "Сфотографируйте лицевую сторону карты"
             } else {
+                "Сфотографируйте сторону со штрихкодом"
+            },
+            onCaptured = { bitmap ->
+                capturingSide = null
                 pendingCropBitmap = bitmap
-                croppingSide = capturingSide
-            }
-            file.delete()
-        }
-    }
-
-    val takePicture = rememberLauncherForActivityResult(
-        ActivityResultContracts.TakePicture(),
-    ) { ok ->
-        val file = captureFile
-        if (ok && file != null) onPhotoTaken(file) else capturingSide = null
-    }
-
-    fun startCapture(side: String) {
-        capturingSide = side
-        val file = PhotoStore.newCaptureFile(context)
-        captureFile = file
-        takePicture.launch(FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file))
+                croppingSide = side
+            },
+            onClose = { capturingSide = null },
+        )
+        return
     }
 
     if (croppingSide != null) {
@@ -175,64 +160,76 @@ fun CardScreen(
                 .padding(horizontal = 24.dp),
         )
 
-        if (current.frontPhotoPath != null || current.backPhotoPath != null) {
-            Spacer(Modifier.height(24.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                PhotoThumb("Лицевая сторона", current.frontPhotoPath, Modifier.weight(1f))
-                PhotoThumb("Оборотная сторона", current.backPhotoPath, Modifier.weight(1f))
-            }
-        }
-
         Spacer(Modifier.height(24.dp))
 
+        // Фото сторон: тап по плитке — снять/переснять (старое фото заменится)
         Row(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.padding(horizontal = 24.dp),
+            modifier = Modifier.padding(horizontal = 16.dp),
         ) {
-            OutlinedButton(
-                onClick = { startCapture("front") },
-                shape = RoundedCornerShape(16.dp),
+            PhotoTile(
+                label = "Лицевая сторона",
+                hint = "Сфотографировать лицевую",
+                photoPath = current.frontPhotoPath,
+                onShoot = { capturingSide = "front" },
                 modifier = Modifier.weight(1f),
-            ) {
-                Icon(Icons.Filled.PhotoCamera, contentDescription = null)
-                Spacer(Modifier.padding(start = 6.dp))
-                Text("Фото лицевой")
-            }
-            OutlinedButton(
-                onClick = { startCapture("back") },
-                shape = RoundedCornerShape(16.dp),
+            )
+            PhotoTile(
+                label = "Сторона со штрихкодом",
+                hint = "Сфотографировать штрихкод",
+                photoPath = current.backPhotoPath,
+                onShoot = { capturingSide = "back" },
                 modifier = Modifier.weight(1f),
-            ) {
-                Icon(Icons.Filled.PhotoCamera, contentDescription = null)
-                Spacer(Modifier.padding(start = 6.dp))
-                Text("Фото оборотной")
-            }
+            )
         }
         Spacer(Modifier.height(24.dp))
     }
 }
 
+/** Плитка стороны карты: фото или заглушка с камерой; тап — снять. */
 @Composable
-private fun PhotoThumb(label: String, path: String?, modifier: Modifier = Modifier) {
-    val photo = remember(path) { PhotoStore.load(path, maxDim = 512) }
-    if (photo != null) {
-        Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-            Image(
-                bitmap = photo.asImageBitmap(),
-                contentDescription = label,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1.586f)
-                    .background(Color.White, RoundedCornerShape(16.dp)),
-            )
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp),
-            )
+private fun PhotoTile(
+    label: String,
+    hint: String,
+    photoPath: String?,
+    onShoot: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(1.586f)
+                .background(Color.White.copy(alpha = 0.7f), RoundedCornerShape(16.dp))
+                .clickable(onClick = onShoot),
+        ) {
+            val photo = remember(photoPath) { PhotoStore.load(photoPath, maxDim = 512) }
+            if (photo != null) {
+                Image(
+                    bitmap = photo.asImageBitmap(),
+                    contentDescription = label,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            } else {
+                Icon(
+                    Icons.Filled.PhotoCamera,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
+        Text(
+            text = if (photoPath != null) "$label — нажмите, чтобы заменить" else hint,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 4.dp),
+        )
     }
 }
 

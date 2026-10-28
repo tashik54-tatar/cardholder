@@ -3,7 +3,6 @@ package com.tashik54.cardholder.data
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.net.Uri
 import java.io.File
 import java.util.UUID
 
@@ -49,6 +48,41 @@ object PhotoStore {
         }
     }
 
-    /** Декодирование снимка камеры по Uri (FileProvider). */
-    fun loadFromUri(context: Context, uri: Uri): Bitmap? = load(uri.path, maxDim = 2048)
+    /**
+     * Загрузка снимка камеры с учётом поворота из EXIF — иначе фото
+     * с некоторых устройств сохраняется «лёжа на боку».
+     */
+    fun loadCapture(file: File, maxDim: Int = 2048): Bitmap? {
+        if (!file.exists()) return null
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(file.absolutePath, bounds)
+        if (bounds.outWidth <= 0) return null
+        var sample = 1
+        while (bounds.outWidth / (sample * 2) >= maxDim || bounds.outHeight / (sample * 2) >= maxDim) {
+            sample *= 2
+        }
+        val bitmap = BitmapFactory.decodeFile(
+            file.absolutePath,
+            BitmapFactory.Options().apply { inSampleSize = sample },
+        ) ?: return null
+
+        val rotation = when (
+            try {
+                androidx.exifinterface.media.ExifInterface(file.absolutePath).getAttributeInt(
+                    androidx.exifinterface.media.ExifInterface.TAG_ORIENTATION,
+                    androidx.exifinterface.media.ExifInterface.ORIENTATION_NORMAL,
+                )
+            } catch (_: Exception) {
+                androidx.exifinterface.media.ExifInterface.ORIENTATION_NORMAL
+            }
+        ) {
+            androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_90 -> 90f
+            androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_180 -> 180f
+            androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_270 -> 270f
+            else -> 0f
+        }
+        if (rotation == 0f) return bitmap
+        val matrix = android.graphics.Matrix().apply { postRotate(rotation) }
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+    }
 }
