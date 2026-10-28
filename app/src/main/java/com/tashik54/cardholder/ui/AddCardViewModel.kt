@@ -17,6 +17,7 @@ class AddCardViewModel(private val repository: CardRepository) : ViewModel() {
         storeName: String,
         codeType: CodeType,
         codeValue: String,
+        barcodeFormat: String? = null,
         onDone: () -> Unit,
     ) {
         viewModelScope.launch {
@@ -25,6 +26,7 @@ class AddCardViewModel(private val repository: CardRepository) : ViewModel() {
                     storeName = storeName.trim(),
                     codeType = codeType,
                     codeValue = codeValue.trim(),
+                    barcodeFormat = barcodeFormat,
                 ),
             )
             onDone()
