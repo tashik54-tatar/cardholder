@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -151,15 +152,21 @@ private fun CropOverlay(
 ) {
     val handleRadius = 14.dp.value
 
-    fun toNorm(pos: Offset): Offset =
-        Offset(
-            ((pos.x - areaOffset.x) / areaSize.width).coerceIn(0f, 1f),
-            ((pos.y - areaOffset.y) / areaSize.height).coerceIn(0f, 1f),
-        )
-
-    // Какой угол/область тянем
     var dragTarget by remember { mutableStateOf<String?>(null) }
     val accent = MaterialTheme.colorScheme.primary
+
+    // pointerInput(Unit) создаёт замыкание один раз — без rememberUpdatedState
+    // оно держало бы устаревший rect, и рамка «не тянулась»
+    val currentRect by rememberUpdatedState(rect)
+    val currentAreaOffset by rememberUpdatedState(areaOffset)
+    val currentAreaSize by rememberUpdatedState(areaSize)
+    val currentOnRectChange by rememberUpdatedState(onRectChange)
+
+    fun toNormLive(pos: Offset): Offset =
+        Offset(
+            ((pos.x - currentAreaOffset.x) / currentAreaSize.width).coerceIn(0f, 1f),
+            ((pos.y - currentAreaOffset.y) / currentAreaSize.height).coerceIn(0f, 1f),
+        )
 
     Canvas(
         modifier = Modifier
@@ -167,7 +174,8 @@ private fun CropOverlay(
             .pointerInput(Unit) {
                 detectDragGestures(
                     onDragStart = { pos ->
-                        val n = toNorm(pos)
+                        val rect = currentRect
+                        val n = toNormLive(pos)
                         val corners = listOf("tl" to Offset(rect.left, rect.top),
                             "tr" to Offset(rect.right, rect.top),
                             "bl" to Offset(rect.left, rect.bottom),
@@ -179,28 +187,28 @@ private fun CropOverlay(
                     },
                     onDrag = { change, drag ->
                         change.consume()
-                        val d = Offset(drag.x / areaSize.width, drag.y / areaSize.height)
+                        val r = currentRect
+                        val d = Offset(drag.x / currentAreaSize.width, drag.y / currentAreaSize.height)
                         val min = 0.15f
-                        val r = rect
                         when (dragTarget) {
-                            "tl" -> onRectChange(Rect(
+                            "tl" -> currentOnRectChange(Rect(
                                 (r.left + d.x).coerceIn(0f, r.right - min),
                                 (r.top + d.y).coerceIn(0f, r.bottom - min),
                                 r.right, r.bottom,
                             ))
-                            "tr" -> onRectChange(Rect(
+                            "tr" -> currentOnRectChange(Rect(
                                 r.left,
                                 (r.top + d.y).coerceIn(0f, r.bottom - min),
                                 (r.right + d.x).coerceIn(r.left + min, 1f),
                                 r.bottom,
                             ))
-                            "bl" -> onRectChange(Rect(
+                            "bl" -> currentOnRectChange(Rect(
                                 (r.left + d.x).coerceIn(0f, r.right - min),
                                 r.top,
                                 r.right,
                                 (r.bottom + d.y).coerceIn(r.top + min, 1f),
                             ))
-                            "br" -> onRectChange(Rect(
+                            "br" -> currentOnRectChange(Rect(
                                 r.left, r.top,
                                 (r.right + d.x).coerceIn(r.left + min, 1f),
                                 (r.bottom + d.y).coerceIn(r.top + min, 1f),
@@ -210,7 +218,7 @@ private fun CropOverlay(
                                 val h = r.height
                                 val nl = (r.left + d.x).coerceIn(0f, 1f - w)
                                 val nt = (r.top + d.y).coerceIn(0f, 1f - h)
-                                onRectChange(Rect(nl, nt, nl + w, nt + h))
+                                currentOnRectChange(Rect(nl, nt, nl + w, nt + h))
                             }
                         }
                     },

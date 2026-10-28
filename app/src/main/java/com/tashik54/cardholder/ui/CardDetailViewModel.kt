@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.tashik54.cardholder.data.Card
 import com.tashik54.cardholder.data.CardRepository
+import com.tashik54.cardholder.data.PhotoStore
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -21,9 +22,18 @@ class CardDetailViewModel(
     val card: StateFlow<Card?> = repository.observeById(cardId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    /** Сохраняет изменения карты (например, фото сторон). */
+    /** Сохраняет изменения карты (например, название). */
     fun update(card: Card) {
         viewModelScope.launch { repository.update(card) }
+    }
+
+    /** Удаляет карту вместе с файлами фото сторон. */
+    fun delete(card: Card) {
+        viewModelScope.launch {
+            PhotoStore.delete(card.frontPhotoPath)
+            PhotoStore.delete(card.backPhotoPath)
+            repository.delete(card)
+        }
     }
 
     companion object {
