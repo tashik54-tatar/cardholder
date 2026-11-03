@@ -13,8 +13,8 @@ android {
         applicationId = "com.tashik54.cardholder"
         minSdk = 26
         targetSdk = 34
-        versionCode = 19
-        versionName = "0.9.4"
+        versionCode = 20
+        versionName = "0.9.5"
     }
 
     // Имя APK с версией: MyCards-v0.7.1-debug.apk

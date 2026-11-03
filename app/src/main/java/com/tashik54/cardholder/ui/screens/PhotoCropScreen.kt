@@ -59,18 +59,12 @@ fun PhotoCropScreen(
     onDone: (Bitmap?) -> Unit,
 ) {
     val cardRatio = 1.586f
-    // Рамка в нормированных координатах (0..1 относительно показа фото)
-    var rect by remember {
-        mutableStateOf(
-            if (lockCardRatio) {
-                // Стартовая рамка: на всю ширину, высота по пропорции карты
-                val h = 0.9f / cardRatio
-                Rect(0.05f, 0.5f - h / 2, 0.95f, 0.5f + h / 2)
-            } else {
-                Rect(0.05f, 0.05f, 0.95f, 0.95f)
-            },
-        )
-    }
+    // Рамка в нормированных координатах (0..1 относительно показа фото).
+    // Пропорция карты задана в ЭКРАННЫХ координатах; в координатах фото она
+    // другая (зависит от пропорций самого фото) — корректируется после
+    // первого измерения shown-области (см. ниже).
+    var rect by remember { mutableStateOf(Rect(0.05f, 0.05f, 0.95f, 0.95f)) }
+    var rectInitialized by remember { mutableStateOf(false) }
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
 
     // Полноэкранное окно: нижнее меню приложения не перехватывает касания
@@ -120,6 +114,18 @@ fun PhotoCropScreen(
                 val left = (imgW - shownW) / 2f
                 val top = (imgH - shownH) / 2f
                 val shown = Offset(left, top)
+
+                // Стартовая рамка под формат карты: пересчёт пропорции
+                // из экранных координат в координаты фото.
+                if (lockCardRatio && !rectInitialized && shownW > 0f && shownH > 0f) {
+                    // w/h в координатах фото, дающий 1.586 на экране
+                    val normRatio = cardRatio * shownH / shownW
+                    var w = 0.9f
+                    var h = w / normRatio
+                    if (h > 0.95f) { h = 0.95f; w = h * normRatio }
+                    rect = Rect(0.5f - w / 2, 0.5f - h / 2, 0.5f + w / 2, 0.5f + h / 2)
+                    rectInitialized = true
+                }
 
                 CropOverlay(
                     rect = rect,
@@ -209,9 +215,9 @@ private fun CropOverlay(
                         val min = 0.15f
                         if (aspectRatio != null && dragTarget in listOf("tl", "tr", "bl", "br")) {
                             // Фиксированная пропорция: размер меняется, соотношение — нет.
-                            // Ширина ведущая (из горизонтального перетаскивания),
-                            // высота выводится из пропорции; противоположный угол закреплён.
-                            val ratio = aspectRatio
+                            // Пропорция задана в экранных координатах, переводим её
+                            // в координаты фото через реальные размеры показанной области.
+                            val ratio = aspectRatio * currentAreaSize.height / currentAreaSize.width
                             when (dragTarget) {
                                 "br" -> {
                                     var w = (r.right + d.x).coerceIn(r.left + min, 1f) - r.left
