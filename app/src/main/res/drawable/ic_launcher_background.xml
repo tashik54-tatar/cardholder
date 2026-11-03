@@ -1,10 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Фирменный пастельный градиент фона иконки (как фон приложения) -->
-<shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <gradient
-        android:type="linear"
-        android:angle="315"
-        android:startColor="#FFE3EE"
-        android:centerColor="#E8DDFF"
-        android:endColor="#DDE9FF" />
-</shape>
+<!-- Фон иконки «Тёмная люкс»: глубокий сине-фиолетовый градиент + свечение -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <path android:pathData="M0,0 h108 v108 h-108 z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="54" android:startY="0"
+                android:endX="54" android:endY="108">
+                <item android:offset="0" android:color="#FF262C4A" />
+                <item android:offset="1" android:color="#FF14182B" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Мягкое лавандовое свечение сверху -->
+    <path android:pathData="M0,0 h108 v108 h-108 z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="radial"
+                android:centerX="54" android:centerY="30"
+                android:gradientRadius="81"
+                android:startColor="#598B93D9"
+                android:endColor="#008B93D9" />
+        </aapt:attr>
+    </path>
+</vector>

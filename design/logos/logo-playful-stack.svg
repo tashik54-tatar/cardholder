@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#DDE9FF"/>
+      <stop offset="0.5" stop-color="#E8DDFF"/>
+      <stop offset="1" stop-color="#FFE3EE"/>
+    </linearGradient>
+    <linearGradient id="gAmber" x1="104" y1="196" x2="316" y2="336" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFD166"/>
+      <stop offset="1" stop-color="#FFAD3D"/>
+    </linearGradient>
+    <linearGradient id="gPink" x1="196" y1="196" x2="408" y2="336" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FF9BB8"/>
+      <stop offset="1" stop-color="#FF6FA0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- rounded-square icon canvas -->
+  <rect width="512" height="512" rx="115" fill="url(#bg)"/>
+
+  <g transform="translate(0 -14)">
+  <!-- soft ground shadow -->
+  <ellipse cx="256" cy="398" rx="148" ry="24" fill="#5C6BC0" opacity="0.15"/>
+
+  <!-- back card: amber, tilted left -->
+  <g transform="rotate(-18 210 266)">
+    <rect x="104" y="196" width="212" height="140" rx="26" fill="url(#gAmber)"/>
+    <rect x="128" y="220" width="64" height="18" rx="9" fill="#FFFFFF" opacity="0.75"/>
+  </g>
+
+  <!-- back card: pink, tilted right -->
+  <g transform="rotate(17 302 266)">
+    <rect x="196" y="196" width="212" height="140" rx="26" fill="url(#gPink)"/>
+    <circle cx="382" cy="310" r="16" fill="#FFFFFF" opacity="0.8"/>
+  </g>
+
+  <!-- front card: white with indigo rim, barcode and punch hole -->
+  <g transform="rotate(-5 256 307)">
+    <rect x="134" y="226" width="244" height="162" rx="34" fill="#5C6BC0"/>
+    <rect x="142" y="234" width="228" height="146" rx="27" fill="#FFFFFF"/>
+    <circle cx="180" cy="268" r="14" fill="#E8DDFF"/>
+    <g fill="#5C6BC0">
+      <rect x="224" y="300" width="14" height="54" rx="4"/>
+      <rect x="246" y="300" width="6" height="54" rx="3"/>
+      <rect x="260" y="300" width="18" height="54" rx="4"/>
+      <rect x="286" y="300" width="8" height="54" rx="4"/>
+      <rect x="302" y="300" width="14" height="54" rx="4"/>
+      <rect x="324" y="300" width="6" height="54" rx="3"/>
+    </g>
+  </g>
+  </g>
+</svg>

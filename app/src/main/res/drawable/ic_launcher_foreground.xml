@@ -1,39 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Белая карточка со штрихкодом и фирменной полосой — в безопасной зоне иконки -->
+<!-- «Тёмная люкс»: светлая карточка со штрихкодом и золотой линией сканирования -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Лёгкая тень под карточкой -->
-    <path
-        android:fillColor="#18000000"
-        android:pathData="M24,37 h60 a8,8 0 0 1 8,8 v20 a8,8 0 0 1 -8,8 h-60 a8,8 0 0 1 -8,-8 v-20 a8,8 0 0 1 8,-8 z"
-        android:translateY="2.5" />
+    <!-- Карточка с вертикальным светлым градиентом -->
+    <path android:pathData="M34.6,32.91 h38.81 a5.91,5.91 0 0 1 5.91,5.91 v30.37 a5.91,5.91 0 0 1 -5.91,5.91 h-38.81 a5.91,5.91 0 0 1 -5.91,-5.91 v-30.37 a5.91,5.91 0 0 1 5.91,-5.91 z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="54" android:startY="32.91"
+                android:endX="54" android:endY="75.1">
+                <item android:offset="0" android:color="#FFFFFFFF" />
+                <item android:offset="1" android:color="#FFDEE4F7" />
+            </gradient>
+        </aapt:attr>
+    </path>
 
-    <!-- Карточка -->
+    <!-- Штрихкод: guard-полосы и данные -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M24,35 h60 a8,8 0 0 1 8,8 v22 a8,8 0 0 1 -8,8 h-60 a8,8 0 0 1 -8,-8 v-22 a8,8 0 0 1 8,-8 z" />
-
-    <!-- Фирменная полоса-магнит -->
-    <path
-        android:fillColor="#5C6BC0"
-        android:pathData="M25,41 h58 v4.5 h-58 z" />
-
-    <!-- Штрихкод -->
-    <path
-        android:fillColor="#1C1B22"
+        android:fillColor="#FF1B2032"
         android:pathData="
-            M30,51 h2.6 v14 h-2.6 z
-            M35,51 h1.4 v14 h-1.4 z
-            M39,51 h3.2 v14 h-3.2 z
-            M45,51 h1.4 v14 h-1.4 z
-            M49,51 h2.2 v14 h-2.2 z
-            M54,51 h3.4 v14 h-3.4 z
-            M60,51 h1.4 v14 h-1.4 z
-            M64,51 h2.4 v14 h-2.4 z
-            M69,51 h1.4 v14 h-1.4 z
-            M73,51 h3 v14 h-3 z" />
+            M37.13,41.77 h2.11 v25.31 h-2.11 z
+            M68.77,41.77 h2.11 v25.31 h-2.11 z
+            M40.5,41.77 h1.27 v20.25 h-1.27 z
+            M43.03,41.77 h2.95 v20.25 h-2.95 z
+            M47.25,41.77 h1.27 v20.25 h-1.27 z
+            M49.78,41.77 h2.11 v20.25 h-2.11 z
+            M53.16,41.77 h1.27 v20.25 h-1.27 z
+            M55.69,41.77 h2.95 v20.25 h-2.95 z
+            M59.91,41.77 h1.27 v20.25 h-1.27 z
+            M62.44,41.77 h2.11 v20.25 h-2.11 z
+            M65.81,41.77 h1.27 v20.25 h-1.27 z" />
+
+    <!-- Золотая линия сканирования, обрезанная карточкой, лёгкий наклон -->
+    <group>
+        <clip-path android:pathData="M34.6,32.91 h38.81 a5.91,5.91 0 0 1 5.91,5.91 v30.37 a5.91,5.91 0 0 1 -5.91,5.91 h-38.81 a5.91,5.91 0 0 1 -5.91,-5.91 v-30.37 a5.91,5.91 0 0 1 5.91,-5.91 z" />
+        <group
+            android:rotation="-6"
+            android:pivotX="54"
+            android:pivotY="62.23">
+            <path android:pathData="M27.21,60.33 h53.58 a1.9,1.9 0 0 1 0,3.8 h-53.58 a1.9,1.9 0 0 1 0,-3.8 z">
+                <aapt:attr name="android:fillColor">
+                    <gradient
+                        android:type="linear"
+                        android:startX="25.31" android:startY="62.23"
+                        android:endX="82.69" android:endY="62.23">
+                        <item android:offset="0" android:color="#FFF6D982" />
+                        <item android:offset="0.5" android:color="#FFE3B84F" />
+                        <item android:offset="1" android:color="#FFC9A43C" />
+                    </gradient>
+                </aapt:attr>
+            </path>
+        </group>
+    </group>
 </vector>

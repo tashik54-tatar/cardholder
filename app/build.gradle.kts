@@ -13,8 +13,13 @@ android {
         applicationId = "com.tashik54.cardholder"
         minSdk = 26
         targetSdk = 34
-        versionCode = 21
-        versionName = "0.9.6"
+        versionCode = 22
+        versionName = "1.0"
+    }
+
+    // Личная подпись релиза debug-ключом — APK ставится на устройство
+    signingConfigs {
+        getByName("debug") { /* создаётся AGP автоматически */ }
     }
 
     // Имя APK с версией: MyCards-v0.7.1-debug.apk
@@ -28,6 +33,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
+            signingConfig = signingConfigs.getByName("debug")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

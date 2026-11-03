@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="cardGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#DDE9FF"/>
+      <stop offset="0.5" stop-color="#E8DDFF"/>
+      <stop offset="1" stop-color="#FFE3EE"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Фон: скруглённый квадрат, фирменный индиго -->
+  <rect width="512" height="512" rx="115" fill="#5C6BC0"/>
+
+  <!-- Карточка -->
+  <rect x="96" y="131" width="320" height="250" rx="44" fill="url(#cardGrad)"/>
+
+  <!-- Монограмма МК, нарисована штрихами-путями -->
+  <g stroke="#1C1B22" stroke-width="32" fill="none" stroke-linecap="butt" stroke-linejoin="round">
+    <path d="M144 282 V180 L209 248 L274 180 V282"/>
+    <path d="M320 180 V282"/>
+    <path d="M368 180 L322 232 L368 282"/>
+  </g>
+
+  <!-- Штрихкод-полоса на карточке -->
+  <g fill="#5C6BC0">
+    <rect x="198" y="318" width="12" height="22" rx="3"/>
+    <rect x="217" y="318" width="5" height="22" rx="2.5"/>
+    <rect x="229" y="318" width="18" height="22" rx="3"/>
+    <rect x="254" y="318" width="6" height="22" rx="3"/>
+    <rect x="267" y="318" width="12" height="22" rx="3"/>
+    <rect x="286" y="318" width="5" height="22" rx="2.5"/>
+    <rect x="298" y="318" width="16" height="22" rx="3"/>
+  </g>
+</svg>

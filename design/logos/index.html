@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Галерея логотипов — карта лояльности</title>
+<style>
+  :root {
+    --ink: #1C1B22;
+    --muted: #5B6172;
+    --indigo: #5C6BC0;
+    --line: #D9DEEC;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: #ECEFF7;
+    color: var(--ink);
+    line-height: 1.55;
+    padding: 40px 20px 80px;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  .page-head { text-align: center; margin-bottom: 44px; }
+  .page-head h1 { font-size: 30px; letter-spacing: -0.02em; }
+  .page-head p { color: var(--muted); margin-top: 8px; font-size: 15px; }
+  .variant {
+    background: #FFFFFF;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 28px 28px 24px;
+    margin-bottom: 36px;
+    box-shadow: 0 8px 24px rgba(28, 27, 34, 0.06);
+  }
+  .vhead { display: flex; align-items: center; gap: 18px; }
+  .vnum {
+    font-size: 56px; font-weight: 800; line-height: 1;
+    color: transparent;
+    background: linear-gradient(135deg, #5C6BC0, #9B6BD0);
+    -webkit-background-clip: text;
+    background-clip: text;
+    flex: none;
+  }
+  .vtitles { flex: 1; min-width: 0; }
+  .vtitles h2 { font-size: 21px; letter-spacing: -0.01em; }
+  .vfile { font-size: 13px; color: var(--muted); font-family: ui-monospace, Consolas, monospace; margin-top: 2px; }
+  .score-badge {
+    flex: none; font-size: 15px; font-weight: 700; color: #FFFFFF;
+    background: var(--indigo); border-radius: 999px; padding: 6px 14px;
+  }
+  .vdesc { margin: 14px 0 20px; font-size: 15px; color: #33384A; max-width: 78ch; }
+  .themes { display: flex; gap: 16px; flex-wrap: wrap; }
+  .stage {
+    flex: 1 1 320px; border-radius: 16px; padding: 26px 16px 18px;
+    display: flex; flex-direction: column; align-items: center; gap: 16px;
+  }
+  .stage figcaption {
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em;
+    font-weight: 600; align-self: flex-start;
+  }
+  .stage-light { background: #F4F6FB; border: 1px solid #E2E6F0; }
+  .stage-light figcaption { color: #6B7190; }
+  .stage-dark { background: #1B2032; border: 1px solid #2A3050; }
+  .stage-dark figcaption { color: #9AA2C4; }
+  .stage svg { display: block; border-radius: 44px; }
+  .critic { margin-top: 22px; }
+  .critic h3 {
+    font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--muted); margin-bottom: 12px;
+  }
+  .critic-grid { display: flex; gap: 20px; flex-wrap: wrap; }
+  .critic-item { flex: 1 1 260px; }
+  .critic-item h4 { font-size: 14px; margin-bottom: 6px; }
+  .critic-item p { font-size: 14px; color: #3A3F52; }
+  .c-plus { color: #2E7D46; }
+  .c-minus { color: #B3562E; }
+  .critic-score {
+    flex: 0 0 120px; text-align: center; align-self: flex-start;
+    border: 1px solid var(--line); border-radius: 14px; padding: 12px 10px;
+    background: #F8F9FD;
+  }
+  .critic-score h4 { font-size: 12px; color: var(--muted); font-weight: 600; }
+  .score-big { font-size: 30px; font-weight: 800; color: var(--indigo); margin-top: 4px; }
+  .score-big span { font-size: 14px; font-weight: 600; color: var(--muted); }
+  footer { text-align: center; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="page-head">
+    <h1>Галерея логотипов: карта лояльности</h1>
+    <p>Шесть концепций знака, каждая — на светлом и тёмном фоне. Варианты отсортированы по оценке критика, от лучшей к худшей.</p>
+  </header>
+    <article class="variant">
+      <header class="vhead">
+        <span class="vnum">1</span>
+        <div class="vtitles">
+          <h2>Тёмная люкс: карта со сканом</h2>
+          <p class="vfile">logo-dark-luxe.svg</p>
+        </div>
+        <span class="score-badge" title="Оценка критика">9.3</span>
+      </header>
+      <p class="vdesc">Белая карточка со строгим штрихкодом на глубоком сине-чёрном градиенте. Золотая линия сканирования, наклонённая на −6°, вносит движение и читается как момент оплаты — единственный тёплый акцент в холодной палитре.</p>
+      <div class="themes">
+        <figure class="stage stage-light">
+          <figcaption>Светлая тема · #F4F6FB</figcaption>
+          <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="dl-l-bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#262C4A"/>
+      <stop offset="1" stop-color="#14182B"/>
+    </linearGradient>
+    <radialGradient id="dl-l-glow" cx="0.5" cy="0.28" r="0.75">
+      <stop offset="0" stop-color="#8B93D9" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#8B93D9" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="dl-l-cardGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#DEE4F7"/>
+    </linearGradient>
+    <linearGradient id="dl-l-goldGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#F6D982"/>
+      <stop offset="0.5" stop-color="#E3B84F"/>
+      <stop offset="1" stop-color="#C9A43C"/>
+    </linearGradient>
+    <clipPath id="dl-l-cardClip">
+      <rect x="136" y="156" width="240" height="200" rx="28"/>
+    </clipPath>
+  </defs>
+
+  <!-- Иконный фон: скруглённый квадрат -->
+  <rect x="0" y="0" width="512" height="512" rx="115" fill="url(#dl-l-bgGrad)"/>
+  <rect x="0" y="0" width="512" height="512" rx="115" fill="url(#dl-l-glow)"/>
+
+  <!-- Светлая карточка -->
+  <rect x="136" y="156" width="240" height="200" rx="28" fill="url(#dl-l-cardGrad)"/>
+
+  <!-- Штрихкод -->
+  <g fill="#1B2032">
+    <!-- guard bars -->
+    <rect x="176" y="198" width="10" height="120"/>
+    <rect x="326" y="198" width="10" height="120"/>
+    <!-- data bars -->
+    <rect x="192" y="198" width="6" height="96"/>
+    <rect x="204" y="198" width="14" height="96"/>
+    <rect x="224" y="198" width="6" height="96"/>
+    <rect x="236" y="198" width="10" height="96"/>
+    <rect x="252" y="198" width="6" height="96"/>
+    <rect x="264" y="198" width="14" height="96"/>
+    <rect x="284" y="198" width="6" height="96"/>
+    <rect x="296" y="198" width="10" height="96"/>
+    <rect x="312" y="198" width="6" height="96"/>
+  </g>
+
+  <!-- Золотая линия сканирования -->
+  <g clip-path="url(#dl-l-cardClip)">
+    <rect x="120" y="286" width="272" height="18" rx="9" fill="url(#dl-l-goldGrad)" transform="rotate(-6 256 295)"/>
+  </g>
+</svg>
+        </figure>
+        <figure class="stage stage-dark">
+          <figcaption>Тёмная тема · #1B2032</figcaption>
+          <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="dl-d-bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#262C4A"/>
+      <stop offset="1" stop-color="#14182B"/>
+    </linearGradient>
+    <radialGradient id="dl-d-glow" cx="0.5" cy="0.28" r="0.75">
+      <stop offset="0" stop-color="#8B93D9" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#8B93D9" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="dl-d-cardGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#DEE4F7"/>
+    </linearGradient>
+    <linearGradient id="dl-d-goldGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#F6D982"/>
+      <stop offset="0.5" stop-color="#E3B84F"/>
+      <stop offset="1" stop-color="#C9A43C"/>
+    </linearGradient>
+    <clipPath id="dl-d-cardClip">
+      <rect x="136" y="156" width="240" height="200" rx="28"/>
+    </clipPath>
+  </defs>
+
+  <!-- Иконный фон: скруглённый квадрат -->
+  <rect x="0" y="0" width="512" height="512" rx="115" fill="url(#dl-d-bgGrad)"/>
+  <rect x="0" y="0" width="512" height="512" rx="115" fill="url(#dl-d-glow)"/>
+
+  <!-- Светлая карточка -->
+  <rect x="136" y="156" width="240" height="200" rx="28" fill="url(#dl-d-cardGrad)"/>
+
+  <!-- Штрихкод -->
+  <g fill="#1B2032">
+    <!-- guard bars -->
+    <rect x="176" y="198" width="10" height="120"/>
+    <rect x="326" y="198" width="10" height="120"/>
+    <!-- data bars -->
+    <rect x="192" y="198" width="6" height="96"/>
+    <rect x="204" y="198" width="14" height="96"/>
+    <rect x="224" y="198" width="6" height="96"/>
+    <rect x="236" y="198" width="10" height="96"/>
+    <rect x="252" y="198" width="6" height="96"/>
+    <rect x="264" y="198" width="14" height="96"/>
+    <rect x="284" y="198" width="6" height="96"/>
+    <rect x="296" y="198" width="10" height="96"/>
+    <rect x="312" y="198" width="6" height="96"/>
+  </g>
+
+  <!-- Золотая линия сканирования -->
+  <g clip-path="url(#dl-d-cardClip)">
+    <rect x="120" y="286" width="272" height="18" rx="9" fill="url(#dl-d-goldGrad)" transform="rotate(-6 256 295)"/>
+  </g>
+</svg>
+        </figure>
+      </div>
+      <div class="critic">
+        <h3>Разбор критика</h3>
+        <div class="critic-grid">
+          <div class="critic-item">
+            <h4 class="c-plus">Сильная сторона</h4>
+            <p>Единственная концепция, честно построенная для тёмной темы: фон иконки сам тёмный, белая карта даёт максимальный контраст, золото работает на ощущение премиальности. Хорошо держится и на светлом фоне за счёт собственной тёмной плитки.</p>
+          </div>
+          <div class="critic-item">
+            <h4 class="c-minus">Что улучшить</h4>
+            <p>На светлом фоне тёмная плитка становится тяжёлым пятном — нужна светлая инверсия для адаптивной иконки. Золотая линия выходит за края clipPath и на 24 px может выглядеть как случайная полоса — проверить мелкие размеры.</p>
+          </div>
+          <div class="critic-score">
+            <h4>Оценка</h4>
+            <p class="score-big">9.3<span>/10</span></p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="variant">
+      <header class="vhead">
+        <span class="vnum">2</span>
+        <div class="vtitles">
+          <h2>Наклонённая карточка</h2>
+          <p class="vfile">logo-flat-indigo.svg</p>
+        </div>
+        <span class="score-badge" title="Оценка критика">9.1</span>
+      </header>
+      <p class="vdesc">Плоская композиция без обводок и теней: индиго-карточка с белым штрихкодом наклонена на −12°, из-за неё выглядывает вторая, светло-лиловая карточка. Динамика достигается чистой геометрией.</p>
+      <div class="themes">
+        <figure class="stage stage-light">
+          <figcaption>Светлая тема · #F4F6FB</figcaption>
+          <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="fi-l-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#DDE9FF"/>
+      <stop offset="0.55" stop-color="#E8DDFF"/>
+      <stop offset="1" stop-color="#FFE3EE"/>
+    </linearGradient>
+    <clipPath id="fi-l-tile">
+      <rect x="0" y="0" width="512" height="512" rx="115" ry="115"/>
+    </clipPath>
+  </defs>
+
+  <!-- Background tile: rounded square on pastel gradient -->
+  <g clip-path="url(#fi-l-tile)">
+    <rect x="0" y="0" width="512" height="512" fill="url(#fi-l-bg)"/>
+  </g>
+
+  <!-- Composition: tilted loyalty card with barcode, flat, no strokes/shadows -->
+  <g transform="rotate(-12 256 256)">
+    <!-- back card, peeking from behind, lighter indigo -->
+    <rect x="142" y="148" width="248" height="168" rx="26" fill="#8C9BD8" transform="rotate(6 266 232)"/>
+    <!-- front card, brand indigo -->
+    <rect x="126" y="166" width="260" height="180" rx="28" fill="#5C6BC0"/>
+    <!-- barcode: white bars drawn as rects -->
+    <g fill="#FFFFFF">
+      <rect x="161" y="202" width="22" height="108" rx="8"/>
+      <rect x="195" y="202" width="12" height="108" rx="6"/>
+      <rect x="221" y="202" width="30" height="108" rx="10"/>
+      <rect x="265" y="202" width="14" height="108" rx="6"/>
+      <rect x="291" y="202" width="22" height="108" rx="8"/>
+      <rect x="325" y="202" width="26" height="108" rx="9"/>
+    </g>
+  </g>
+</svg>
+        </figure>
+        <figure class="stage stage-dark">
+          <figcaption>Тёмная тема · #1B2032</figcaption>
+          <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="fi-d-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#DDE9FF"/>
+      <stop offset="0.55" stop-color="#E8DDFF"/>
+      <stop offset="1" stop-color="#FFE3EE"/>
+    </linearGradient>
+    <clipPath id="fi-d-tile">
+      <rect x="0" y="0" width="512" height="512" rx="115" ry="115"/>
+    </clipPath>
+  </defs>
+
+  <!-- Background tile: rounded square on pastel gradient -->
+  <g clip-path="url(#fi-d-tile)">
+    <rect x="0" y="0" width="512" height="512" fill="url(#fi-d-bg)"/>
+  </g>
+
+  <!-- Composition: tilted loyalty card with barcode, flat, no strokes/shadows -->
+  <g transform="rotate(-12 256 256)">
+    <!-- back card, peeking from behind, lighter indigo -->
+    <rect x="142" y="148" width="248" height="168" rx="26" fill="#8C9BD8" transform="rotate(6 266 232)"/>
+    <!-- front card, brand indigo -->
+    <rect x="126" y="166" width="260" height="180" rx="28" fill="#5C6BC0"/>
+    <!-- barcode: white bars drawn as rects -->
+    <g fill="#FFFFFF">
+      <rect x="161" y="202" width="22" height="108" rx="8"/>
+      <rect x="195" y="202" width="12" height="108" rx="6"/>
+      <rect x="221" y="202" width="30" height="108" rx="10"/>
+      <rect x="265" y="202" width="14" height="108" rx="6"/>
+      <rect x="291" y="202" width="22" height="108" rx="8"/>
+      <rect x="325" y="202" width="26" height="108" rx="9"/>
+    </g>
+  </g>
+</svg>
+        </figure>
+      </div>
+      <div class="critic">
+        <h3>Разбор критика</h3>
+        <div class="critic-grid">
+          <div class="critic-item">
+            <h4 class="c-plus">Сильная сторона</h4>
+            <p>Образцовая плоская стилистика: два силуэта и шесть полос — знак масштабируется от фавиконки до билборда без потерь. Наклон и подглядывающая задняя карта дают живость без декоративного шума.</p>
+          </div>
+          <div class="critic-item">
+            <h4 class="c-minus">Что улучшить</h4>
+            <p>Светлая задняя карточка почти сливается с пастельным градиентом фона — добавить 8–10% насыщенности. В тёмной теме холодный пастельный градиент плитки приглушает индиго передней карты; можно чуть поднять яркость штрихкода.</p>
+          </div>
+          <div class="critic-score">
+            <h4>Оценка</h4>
+            <p class="score-big">9.1<span>/10</span></p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="variant">
+      <header class="vhead">
+        <span class="vnum">3</span>
+        <div class="vtitles">
+          <h2>Карточка, растворяющаяся в QR</h2>
+          <p class="vfile">logo-qr-motif.svg</p>
+        </div>
+        <span class="score-badge" title="Оценка критика">8.7</span>
+      </header>
+      <p class="vdesc">Метафора оцифровки: индиго-карточка с белым штрихкодом рассыпается нижним краем на скруглённые квадратные модули QR-кода с классическим «глазом»-файндером. История «бумажная карта → цифра» рассказана одним кадром.</p>
+      <div class="themes">
+        <figure class="stage stage-light">
+          <figcaption>Светлая тема · #F4F6FB</figcaption>
+          <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="qm-l-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#DDE9FF"/>
+      <stop offset="0.55" stop-color="#E8DDFF"/>
+      <stop offset="1" stop-color="#FFE3EE"/>
+    </linearGradient>
+    <linearGradient id="qm-l-card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6B79D6"/>
+      <stop offset="1" stop-color="#4C58AC"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Иконный скруглённый квадрат на весь холст -->
+  <rect x="0" y="0" width="512" height="512" rx="115" fill="url(#qm-l-bg)"/>
+
+  <!-- QR-блок: край карточки растворяется в модулях -->
+  <g fill="#1C1B22">
+    <!-- модули, свисающие с нижнего края карточки -->
+    <rect x="244" y="270" width="32" height="32" rx="7"/>
+    <rect x="284" y="270" width="32" height="32" rx="7"/>
+    <!-- угловой модуль и ряд, продолжающий край -->
+    <rect x="320" y="270" width="32" height="32" rx="7"/>
+    <rect x="360" y="270" width="32" height="32" rx="7"/>
+    <rect x="400" y="270" width="32" height="32" rx="7"/>
+    <!-- растворение по диагонали -->
+    <rect x="320" y="310" width="32" height="32" rx="7"/>
+    <rect x="400" y="310" width="32" height="32" rx="7"/>
+    <rect x="320" y="350" width="32" height="32" rx="7"/>
+  </g>
+
+  <!-- QR-"глаз" (finder) в правом нижнем углу блока -->
+  <rect x="360" y="350" width="72" height="72" rx="16" fill="#1C1B22"/>
+  <rect x="372" y="362" width="48" height="48" rx="10" fill="#F4EEFF"/>
+  <rect x="384" y="374" width="24" height="24" rx="5" fill="#1C1B22"/>
+
+  <!-- Карточка -->
+  <rect x="90" y="100" width="230" height="170" rx="30" fill="url(#qm-l-card)"/>
+  <!-- строка-«название» на карточке -->
+  <rect x="116" y="126" width="120" height="24" rx="12" fill="#FFFFFF" opacity="0.92"/>
+  <!-- штрихкод на карточке -->
+  <g fill="#FFFFFF" opacity="0.92">
+    <rect x="116" y="196" width="12" height="44" rx="3"/>
+    <rect x="134" y="196" width="6"  height="44" rx="3"/>
+    <rect x="146" y="196" width="16" height="44" rx="3"/>
+    <rect x="168" y="196" width="8"  height="44" rx="3"/>
+    <rect x="182" y="196" width="6"  height="44" rx="3"/>
+    <rect x="194" y="196" width="14" height="44" rx="3"/>
+    <rect x="214" y="196" width="8"  height="44" rx="3"/>
+  </g>
+</svg>
+        </figure>
+        <figure class="stage stage-dark">
+          <figcaption>Тёмная тема · #1B2032</figcaption>
+          <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="qm-d-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#DDE9FF"/>
+      <stop offset="0.55" stop-color="#E8DDFF"/>
+      <stop offset="1" stop-color="#FFE3EE"/>
+    </linearGradient>
+    <linearGradient id="qm-d-card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6B79D6"/>
+      <stop offset="1" stop-color="#4C58AC"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Иконный скруглённый квадрат на весь холст -->
+  <rect x="0" y="0" width="512" height="512" rx="115" fill="url(#qm-d-bg)"/>
+
+  <!-- QR-блок: край карточки растворяется в модулях -->
+  <g fill="#1C1B22">
+    <!-- модули, свисающие с нижнего края карточки -->
+    <rect x="244" y="270" width="32" height="32" rx="7"/>
+    <rect x="284" y="270" width="32" height="32" rx="7"/>
+    <!-- угловой модуль и ряд, продолжающий край -->
+    <rect x="320" y="270" width="32" height="32" rx="7"/>
+    <rect x="360" y="270" width="32" height="32" rx="7"/>
+    <rect x="400" y="270" width="32" height="32" rx="7"/>
+    <!-- растворение по диагонали -->
+    <rect x="320" y="310" width="32" height="32" rx="7"/>
+    <rect x="400" y="310" width="32" height="32" rx="7"/>
+    <rect x="320" y="350" width="32" height="32" rx="7"/>
+  </g>
+
+  <!-- QR-"глаз" (finder) в правом нижнем углу блока -->
+  <rect x="360" y="350" width="72" height="72" rx="16" fill="#1C1B22"/>
+  <rect x="372" y="362" width="48" height="48" rx="10" fill="#F4EEFF"/>
+  <rect x="384" y="374" width="24" height="24" rx="5" fill="#1C1B22"/>
+
+  <!-- Карточка -->
+  <rect x="90" y="100" width="230" height="170" rx="30" fill="url(#qm-d-card)"/>
+  <!-- строка-«название» на карточке -->
+  <rect x="116" y="126" width="120" height="24" rx="12" fill="#FFFFFF" opacity="0.92"/>
+  <!-- штрихкод на карточке -->
+  <g fill="#FFFFFF" opacity="0.92">
+    <rect x="116" y="196" width="12" height="44" rx="3"/>
+    <rect x="134" y="196" width="6"  height="44" rx="3"/>
+    <rect x="146" y="196" width="16" height="44" rx="3"/>
+    <rect x="168" y="196" width="8"  height="44" rx="3"/>
+    <rect x="182" y="196" width="6"  height="44" rx="3"/>
+    <rect x="194" y="196" width="14" height="44" rx="3"/>
+    <rect x="214" y="196" width="8"  height="44" rx="3"/>
+  </g>
+</svg>
+        </figure>
+      </div>
+      <div class="critic">
+        <h3>Разбор критика</h3>
+        <div class="critic-grid">
+          <div class="critic-item">
+            <h4 class="c-plus">Сильная сторона</h4>
+            <p>Самая концептуальная работа набора: понятная драматургия перехода в цифру, при этом модули с мягким скруглением rx=7 не спорят с гладкостью карточки. Диагональное «растворение» задаёт чтение сверху вниз.</p>
+          </div>
+          <div class="critic-item">
+            <h4 class="c-minus">Что улучшить</h4>
+            <p>Файндер в правом нижнем углу перевешивает композицию — карточка и глаз спорят за фокус. Строка-«название» и штрихкод на карте при 32 px исчезнут; предусмотреть упрощённую версию для мелких размеров.</p>
+          </div>
+          <div class="critic-score">
+            <h4>Оценка</h4>
+            <p class="score-big">8.7<span>/10</span></p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="variant">
+      <header class="vhead">
+        <span class="vnum">4</span>
+        <div class="vtitles">
+          <h2>Карта тонкой линией</h2>
+          <p class="vfile">logo-minimal-line.svg</p>
+        </div>
+        <span class="score-badge" title="Оценка критика">8.4</span>
+      </header>
+      <p class="vdesc">Линейный знак: контур карточки со скруглением 32, внутри штрихкод из шести полос переменной толщины и линия подписи. Один цвет — индиго #5C6BC0 — на пастельном градиентном фоне.</p>
+      <div class="themes">
+        <figure class="stage stage-light">
+          <figcaption>Светлая тема · #F4F6FB</figcaption>
+          <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="ml-l-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#DDE9FF"/>
+      <stop offset="0.5" stop-color="#E8DDFF"/>
+      <stop offset="1" stop-color="#FFE3EE"/>
+    </linearGradient>
+  </defs>
+
+  <!-- скруглённый квадрат иконки на весь холст -->
+  <rect x="0" y="0" width="512" height="512" rx="115" fill="url(#ml-l-bg)"/>
+
+  <!-- контур карточки -->
+  <rect x="116" y="156" width="280" height="200" rx="32" fill="#FFFFFF" stroke="#5C6BC0" stroke-width="18"/>
+
+  <!-- штрихкод: шесть линий переменной толщины -->
+  <g fill="#5C6BC0">
+    <rect x="181" y="192" width="16" height="92" rx="8"/>
+    <rect x="211" y="192" width="8"  height="92" rx="4"/>
+    <rect x="233" y="192" width="20" height="92" rx="10"/>
+    <rect x="267" y="192" width="8"  height="92" rx="4"/>
+    <rect x="289" y="192" width="16" height="92" rx="8"/>
+    <rect x="319" y="192" width="12" height="92" rx="6"/>
+  </g>
+
+  <!-- линия подписи под штрихкодом -->
+  <rect x="216" y="312" width="80" height="16" rx="8" fill="#5C6BC0"/>
+</svg>
+        </figure>
+        <figure class="stage stage-dark">
+          <figcaption>Тёмная тема · #1B2032</figcaption>
+          <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="ml-d-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#DDE9FF"/>
+      <stop offset="0.5" stop-color="#E8DDFF"/>
+      <stop offset="1" stop-color="#FFE3EE"/>
+    </linearGradient>
+  </defs>
+
+  <!-- скруглённый квадрат иконки на весь холст -->
+  <rect x="0" y="0" width="512" height="512" rx="115" fill="url(#ml-d-bg)"/>
+
+  <!-- контур карточки -->
+  <rect x="116" y="156" width="280" height="200" rx="32" fill="#FFFFFF" stroke="#5C6BC0" stroke-width="18"/>
+
+  <!-- штрихкод: шесть линий переменной толщины -->
+  <g fill="#5C6BC0">
+    <rect x="181" y="192" width="16" height="92" rx="8"/>
+    <rect x="211" y="192" width="8"  height="92" rx="4"/>
+    <rect x="233" y="192" width="20" height="92" rx="10"/>
+    <rect x="267" y="192" width="8"  height="92" rx="4"/>
+    <rect x="289" y="192" width="16" height="92" rx="8"/>
+    <rect x="319" y="192" width="12" height="92" rx="6"/>
+  </g>
+
+  <!-- линия подписи под штрихкодом -->
+  <rect x="216" y="312" width="80" height="16" rx="8" fill="#5C6BC0"/>
+</svg>
+        </figure>
+      </div>
+      <div class="critic">
+        <h3>Разбор критика</h3>
+        <div class="critic-grid">
+          <div class="critic-item">
+            <h4 class="c-plus">Сильная сторона</h4>
+            <p>Минимализм и моноцвет: знак мгновенно перекрашивается под любую бренд-палитру и идеально работает как монохром в футерах и подписях. Толщина обводки 18 выдержана в одном весе со штрихами — дисциплина линии.</p>
+          </div>
+          <div class="critic-item">
+            <h4 class="c-minus">Что улучшить</h4>
+            <p>При малых размерах тонкие штрихи сливаются в серое пятно — нужен упрощённый вариант с 3–4 полосами. Композиция статичнее конкурентов: не хватает наклона или точки фокуса, знак чуть скучен.</p>
+          </div>
+          <div class="critic-score">
+            <h4>Оценка</h4>
+            <p class="score-big">8.4<span>/10</span></p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="variant">
+      <header class="vhead">
+        <span class="vnum">5</span>
+        <div class="vtitles">
+          <h2>Игривая стопка</h2>
+          <p class="vfile">logo-playful-stack.svg</p>
+        </div>
+        <span class="score-badge" title="Оценка критика">8.2</span>
+      </header>
+      <p class="vdesc">Три карты веером: янтарная наклонена влево, розовая вправо, спереди — белая с индиго-штрихкодом и пунш-отверстием. Мягкая тень заземляет композицию, тёплые градиенты противостоят холодной пастели фона.</p>
+      <div class="themes">
+        <figure class="stage stage-light">
+          <figcaption>Светлая тема · #F4F6FB</figcaption>
+          <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="ps-l-bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#DDE9FF"/>
+      <stop offset="0.5" stop-color="#E8DDFF"/>
+      <stop offset="1" stop-color="#FFE3EE"/>
+    </linearGradient>
+    <linearGradient id="ps-l-gAmber" x1="104" y1="196" x2="316" y2="336" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFD166"/>
+      <stop offset="1" stop-color="#FFAD3D"/>
+    </linearGradient>
+    <linearGradient id="ps-l-gPink" x1="196" y1="196" x2="408" y2="336" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FF9BB8"/>
+      <stop offset="1" stop-color="#FF6FA0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- rounded-square icon canvas -->
+  <rect width="512" height="512" rx="115" fill="url(#ps-l-bg)"/>
+
+  <g transform="translate(0 -14)">
+  <!-- soft ground shadow -->
+  <ellipse cx="256" cy="398" rx="148" ry="24" fill="#5C6BC0" opacity="0.15"/>
+
+  <!-- back card: amber, tilted left -->
+  <g transform="rotate(-18 210 266)">
+    <rect x="104" y="196" width="212" height="140" rx="26" fill="url(#ps-l-gAmber)"/>
+    <rect x="128" y="220" width="64" height="18" rx="9" fill="#FFFFFF" opacity="0.75"/>
+  </g>
+
+  <!-- back card: pink, tilted right -->
+  <g transform="rotate(17 302 266)">
+    <rect x="196" y="196" width="212" height="140" rx="26" fill="url(#ps-l-gPink)"/>
+    <circle cx="382" cy="310" r="16" fill="#FFFFFF" opacity="0.8"/>
+  </g>
+
+  <!-- front card: white with indigo rim, barcode and punch hole -->
+  <g transform="rotate(-5 256 307)">
+    <rect x="134" y="226" width="244" height="162" rx="34" fill="#5C6BC0"/>
+    <rect x="142" y="234" width="228" height="146" rx="27" fill="#FFFFFF"/>
+    <circle cx="180" cy="268" r="14" fill="#E8DDFF"/>
+    <g fill="#5C6BC0">
+      <rect x="224" y="300" width="14" height="54" rx="4"/>
+      <rect x="246" y="300" width="6" height="54" rx="3"/>
+      <rect x="260" y="300" width="18" height="54" rx="4"/>
+      <rect x="286" y="300" width="8" height="54" rx="4"/>
+      <rect x="302" y="300" width="14" height="54" rx="4"/>
+      <rect x="324" y="300" width="6" height="54" rx="3"/>
+    </g>
+  </g>
+  </g>
+</svg>
+        </figure>
+        <figure class="stage stage-dark">
+          <figcaption>Тёмная тема · #1B2032</figcaption>
+          <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="ps-d-bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#DDE9FF"/>
+      <stop offset="0.5" stop-color="#E8DDFF"/>
+      <stop offset="1" stop-color="#FFE3EE"/>
+    </linearGradient>
+    <linearGradient id="ps-d-gAmber" x1="104" y1="196" x2="316" y2="336" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFD166"/>
+      <stop offset="1" stop-color="#FFAD3D"/>
+    </linearGradient>
+    <linearGradient id="ps-d-gPink" x1="196" y1="196" x2="408" y2="336" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FF9BB8"/>
+      <stop offset="1" stop-color="#FF6FA0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- rounded-square icon canvas -->
+  <rect width="512" height="512" rx="115" fill="url(#ps-d-bg)"/>
+
+  <g transform="translate(0 -14)">
+  <!-- soft ground shadow -->
+  <ellipse cx="256" cy="398" rx="148" ry="24" fill="#5C6BC0" opacity="0.15"/>
+
+  <!-- back card: amber, tilted left -->
+  <g transform="rotate(-18 210 266)">
+    <rect x="104" y="196" width="212" height="140" rx="26" fill="url(#ps-d-gAmber)"/>
+    <rect x="128" y="220" width="64" height="18" rx="9" fill="#FFFFFF" opacity="0.75"/>
+  </g>
+
+  <!-- back card: pink, tilted right -->
+  <g transform="rotate(17 302 266)">
+    <rect x="196" y="196" width="212" height="140" rx="26" fill="url(#ps-d-gPink)"/>
+    <circle cx="382" cy="310" r="16" fill="#FFFFFF" opacity="0.8"/>
+  </g>
+
+  <!-- front card: white with indigo rim, barcode and punch hole -->
+  <g transform="rotate(-5 256 307)">
+    <rect x="134" y="226" width="244" height="162" rx="34" fill="#5C6BC0"/>
+    <rect x="142" y="234" width="228" height="146" rx="27" fill="#FFFFFF"/>
+    <circle cx="180" cy="268" r="14" fill="#E8DDFF"/>
+    <g fill="#5C6BC0">
+      <rect x="224" y="300" width="14" height="54" rx="4"/>
+      <rect x="246" y="300" width="6" height="54" rx="3"/>
+      <rect x="260" y="300" width="18" height="54" rx="4"/>
+      <rect x="286" y="300" width="8" height="54" rx="4"/>
+      <rect x="302" y="300" width="14" height="54" rx="4"/>
+      <rect x="324" y="300" width="6" height="54" rx="3"/>
+    </g>
+  </g>
+  </g>
+</svg>
+        </figure>
+      </div>
+      <div class="critic">
+        <h3>Разбор критика</h3>
+        <div class="critic-grid">
+          <div class="critic-item">
+            <h4 class="c-plus">Сильная сторона</h4>
+            <p>Максимум характера в наборе: тёплые градиенты и веер карт делают иконку живой и запоминающейся, она выделяется среди унылых финтех-знаков. Тень и пунш-отверстие добавляют правдоподобия пластиковой карты.</p>
+          </div>
+          <div class="critic-item">
+            <h4 class="c-minus">Что улучшить</h4>
+            <p>Тёплая палитра спорит с холодной тёмной темой — янтарь и розовый «выпрыгивают» неравномерно. При 32 px отверстие и шесть штрихов кода читаются с трудом; к тому же три градиента усложняют перекраску.</p>
+          </div>
+          <div class="critic-score">
+            <h4>Оценка</h4>
+            <p class="score-big">8.2<span>/10</span></p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="variant">
+      <header class="vhead">
+        <span class="vnum">6</span>
+        <div class="vtitles">
+          <h2>МК на карточке со штрихкодом</h2>
+          <p class="vfile">logo-monogram.svg</p>
+        </div>
+        <span class="score-badge" title="Оценка критика">7.9</span>
+      </header>
+      <p class="vdesc">Индиго-плитка со светлой пастельной карточкой: на ней штрихами выведена монограмма «МК» и полоса мини-штрихкода. Единственная концепция набора с буквенным знаком.</p>
+      <div class="themes">
+        <figure class="stage stage-light">
+          <figcaption>Светлая тема · #F4F6FB</figcaption>
+          <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="mo-l-cardGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#DDE9FF"/>
+      <stop offset="0.5" stop-color="#E8DDFF"/>
+      <stop offset="1" stop-color="#FFE3EE"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Фон: скруглённый квадрат, фирменный индиго -->
+  <rect width="512" height="512" rx="115" fill="#5C6BC0"/>
+
+  <!-- Карточка -->
+  <rect x="96" y="131" width="320" height="250" rx="44" fill="url(#mo-l-cardGrad)"/>
+
+  <!-- Монограмма МК, нарисована штрихами-путями -->
+  <g stroke="#1C1B22" stroke-width="32" fill="none" stroke-linecap="butt" stroke-linejoin="round">
+    <path d="M144 282 V180 L209 248 L274 180 V282"/>
+    <path d="M320 180 V282"/>
+    <path d="M368 180 L322 232 L368 282"/>
+  </g>
+
+  <!-- Штрихкод-полоса на карточке -->
+  <g fill="#5C6BC0">
+    <rect x="198" y="318" width="12" height="22" rx="3"/>
+    <rect x="217" y="318" width="5" height="22" rx="2.5"/>
+    <rect x="229" y="318" width="18" height="22" rx="3"/>
+    <rect x="254" y="318" width="6" height="22" rx="3"/>
+    <rect x="267" y="318" width="12" height="22" rx="3"/>
+    <rect x="286" y="318" width="5" height="22" rx="2.5"/>
+    <rect x="298" y="318" width="16" height="22" rx="3"/>
+  </g>
+</svg>
+        </figure>
+        <figure class="stage stage-dark">
+          <figcaption>Тёмная тема · #1B2032</figcaption>
+          <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="mo-d-cardGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#DDE9FF"/>
+      <stop offset="0.5" stop-color="#E8DDFF"/>
+      <stop offset="1" stop-color="#FFE3EE"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Фон: скруглённый квадрат, фирменный индиго -->
+  <rect width="512" height="512" rx="115" fill="#5C6BC0"/>
+
+  <!-- Карточка -->
+  <rect x="96" y="131" width="320" height="250" rx="44" fill="url(#mo-d-cardGrad)"/>
+
+  <!-- Монограмма МК, нарисована штрихами-путями -->
+  <g stroke="#1C1B22" stroke-width="32" fill="none" stroke-linecap="butt" stroke-linejoin="round">
+    <path d="M144 282 V180 L209 248 L274 180 V282"/>
+    <path d="M320 180 V282"/>
+    <path d="M368 180 L322 232 L368 282"/>
+  </g>
+
+  <!-- Штрихкод-полоса на карточке -->
+  <g fill="#5C6BC0">
+    <rect x="198" y="318" width="12" height="22" rx="3"/>
+    <rect x="217" y="318" width="5" height="22" rx="2.5"/>
+    <rect x="229" y="318" width="18" height="22" rx="3"/>
+    <rect x="254" y="318" width="6" height="22" rx="3"/>
+    <rect x="267" y="318" width="12" height="22" rx="3"/>
+    <rect x="286" y="318" width="5" height="22" rx="2.5"/>
+    <rect x="298" y="318" width="16" height="22" rx="3"/>
+  </g>
+</svg>
+        </figure>
+      </div>
+      <div class="critic">
+        <h3>Разбор критика</h3>
+        <div class="critic-grid">
+          <div class="critic-item">
+            <h4 class="c-plus">Сильная сторона</h4>
+            <p>Монограмма — сильный задел для системы: «МК» живёт и без карточки, на аватарах и мерче. Сочетание индиго-плитки и пастельной карты сохраняет семейное сходство с остальными вариантами.</p>
+          </div>
+          <div class="critic-item">
+            <h4 class="c-minus">Что улучшить</h4>
+            <p>Обводка монограммы в 32 px утяжеляет знак — буквы слипаются, стоит снизить вес до 24–26. Мини-штрихкод под монограммой — чистый шум: он не читается и при масштабе превращается в грязную полосу; лучше убрать или заменить одной линией.</p>
+          </div>
+          <div class="critic-score">
+            <h4>Оценка</h4>
+            <p class="score-big">7.9<span>/10</span></p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+  <footer>Самодостаточная страница: SVG вставлены инлайн, внешние ресурсы не используются.</footer>
+</div>
+</body>
+</html>
