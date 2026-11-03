@@ -164,8 +164,15 @@ fun AddCardScreen(
     // Код теперь необязателен: карту можно сохранить только с фото сторон
     val canSave = storeName.isNotBlank()
 
-    // Тип кода и предпросмотр считаются из текущего значения
-    val resolvedType = resolveCodeType(codeValue, detectedFormat)
+    // Тип кода и предпросмотр считаются из текущего значения.
+    // В редактировании, пока значение кода не менялось, сохраняем исходный
+    // тип как есть: QR-код нельзя «угадать» по значению (это не всегда URL),
+    // а пересчёт превращал нетронутый QR в штрихкод.
+    val resolvedType = if (existing != null && codeValue == existing.codeValue) {
+        existing.codeType
+    } else {
+        resolveCodeType(codeValue, detectedFormat)
+    }
     val previewBitmap = remember(codeValue) {
         if (codeValue.isBlank()) null
         else try {
