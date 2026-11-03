@@ -47,15 +47,30 @@ import kotlin.math.abs
 /**
  * Ручная обрезка фото: перетаскиваемая прямоугольная рамка с угловыми
  * маркерами; рамку можно таскать за внутреннюю область.
+ *
+ * @param lockCardRatio если true — рамка зафиксирована в пропорции
+ * банковской карты (1.586): размер меняется, соотношение сторон нет.
  */
 @Composable
 fun PhotoCropScreen(
     bitmap: Bitmap,
     modifier: Modifier = Modifier,
+    lockCardRatio: Boolean = false,
     onDone: (Bitmap?) -> Unit,
 ) {
+    val cardRatio = 1.586f
     // Рамка в нормированных координатах (0..1 относительно показа фото)
-    var rect by remember { mutableStateOf(Rect(0.05f, 0.05f, 0.95f, 0.95f)) }
+    var rect by remember {
+        mutableStateOf(
+            if (lockCardRatio) {
+                // Стартовая рамка: на всю ширину, высота по пропорции карты
+                val h = 0.9f / cardRatio
+                Rect(0.05f, 0.5f - h / 2, 0.95f, 0.5f + h / 2)
+            } else {
+                Rect(0.05f, 0.05f, 0.95f, 0.95f)
+            },
+        )
+    }
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
 
     // Полноэкранное окно: нижнее меню приложения не перехватывает касания
@@ -110,6 +125,7 @@ fun PhotoCropScreen(
                     rect = rect,
                     areaOffset = shown,
                     areaSize = Size(shownW, shownH),
+                    aspectRatio = if (lockCardRatio) cardRatio else null,
                     onRectChange = { rect = it },
                 )
             }
@@ -148,6 +164,7 @@ private fun CropOverlay(
     rect: Rect,
     areaOffset: Offset,
     areaSize: Size,
+    aspectRatio: Float?,
     onRectChange: (Rect) -> Unit,
 ) {
     val handleRadius = 14.dp.value
@@ -190,35 +207,68 @@ private fun CropOverlay(
                         val r = currentRect
                         val d = Offset(drag.x / currentAreaSize.width, drag.y / currentAreaSize.height)
                         val min = 0.15f
-                        when (dragTarget) {
-                            "tl" -> currentOnRectChange(Rect(
-                                (r.left + d.x).coerceIn(0f, r.right - min),
-                                (r.top + d.y).coerceIn(0f, r.bottom - min),
-                                r.right, r.bottom,
-                            ))
-                            "tr" -> currentOnRectChange(Rect(
-                                r.left,
-                                (r.top + d.y).coerceIn(0f, r.bottom - min),
-                                (r.right + d.x).coerceIn(r.left + min, 1f),
-                                r.bottom,
-                            ))
-                            "bl" -> currentOnRectChange(Rect(
-                                (r.left + d.x).coerceIn(0f, r.right - min),
-                                r.top,
-                                r.right,
-                                (r.bottom + d.y).coerceIn(r.top + min, 1f),
-                            ))
-                            "br" -> currentOnRectChange(Rect(
-                                r.left, r.top,
-                                (r.right + d.x).coerceIn(r.left + min, 1f),
-                                (r.bottom + d.y).coerceIn(r.top + min, 1f),
-                            ))
-                            "move" -> {
-                                val w = r.width
-                                val h = r.height
-                                val nl = (r.left + d.x).coerceIn(0f, 1f - w)
-                                val nt = (r.top + d.y).coerceIn(0f, 1f - h)
-                                currentOnRectChange(Rect(nl, nt, nl + w, nt + h))
+                        if (aspectRatio != null && dragTarget in listOf("tl", "tr", "bl", "br")) {
+                            // Фиксированная пропорция: размер меняется, соотношение — нет.
+                            // Ширина ведущая (из горизонтального перетаскивания),
+                            // высота выводится из пропорции; противоположный угол закреплён.
+                            val ratio = aspectRatio
+                            when (dragTarget) {
+                                "br" -> {
+                                    var w = (r.right + d.x).coerceIn(r.left + min, 1f) - r.left
+                                    var h = w / ratio
+                                    if (r.top + h > 1f) { h = 1f - r.top; w = h * ratio }
+                                    currentOnRectChange(Rect(r.left, r.top, r.left + w, r.top + h))
+                                }
+                                "bl" -> {
+                                    var w = r.right - (r.left + d.x).coerceIn(0f, r.right - min)
+                                    var h = w / ratio
+                                    if (r.top + h > 1f) { h = 1f - r.top; w = h * ratio }
+                                    currentOnRectChange(Rect(r.right - w, r.top, r.right, r.top + h))
+                                }
+                                "tr" -> {
+                                    var w = (r.right + d.x).coerceIn(r.left + min, 1f) - r.left
+                                    var h = w / ratio
+                                    if (r.bottom - h < 0f) { h = r.bottom; w = h * ratio }
+                                    currentOnRectChange(Rect(r.left, r.bottom - h, r.left + w, r.bottom))
+                                }
+                                else /* tl */ -> {
+                                    var w = r.right - (r.left + d.x).coerceIn(0f, r.right - min)
+                                    var h = w / ratio
+                                    if (r.bottom - h < 0f) { h = r.bottom; w = h * ratio }
+                                    currentOnRectChange(Rect(r.right - w, r.bottom - h, r.right, r.bottom))
+                                }
+                            }
+                        } else {
+                            when (dragTarget) {
+                                "tl" -> currentOnRectChange(Rect(
+                                    (r.left + d.x).coerceIn(0f, r.right - min),
+                                    (r.top + d.y).coerceIn(0f, r.bottom - min),
+                                    r.right, r.bottom,
+                                ))
+                                "tr" -> currentOnRectChange(Rect(
+                                    r.left,
+                                    (r.top + d.y).coerceIn(0f, r.bottom - min),
+                                    (r.right + d.x).coerceIn(r.left + min, 1f),
+                                    r.bottom,
+                                ))
+                                "bl" -> currentOnRectChange(Rect(
+                                    (r.left + d.x).coerceIn(0f, r.right - min),
+                                    r.top,
+                                    r.right,
+                                    (r.bottom + d.y).coerceIn(r.top + min, 1f),
+                                ))
+                                "br" -> currentOnRectChange(Rect(
+                                    r.left, r.top,
+                                    (r.right + d.x).coerceIn(r.left + min, 1f),
+                                    (r.bottom + d.y).coerceIn(r.top + min, 1f),
+                                ))
+                                "move" -> {
+                                    val w = r.width
+                                    val h = r.height
+                                    val nl = (r.left + d.x).coerceIn(0f, 1f - w)
+                                    val nt = (r.top + d.y).coerceIn(0f, 1f - h)
+                                    currentOnRectChange(Rect(nl, nt, nl + w, nt + h))
+                                }
                             }
                         }
                     },

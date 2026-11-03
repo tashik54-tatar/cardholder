@@ -300,10 +300,11 @@ fun AddCardScreen(
         return
     }
 
-    // Обрезка снимка
+    // Обрезка снимка (лицевую сторону сразу под пропорцию карты)
     croppingSide?.let { side ->
         PhotoCropScreen(
             bitmap = pendingCropBitmap ?: Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888),
+            lockCardRatio = side == "front",
             onDone = { cropped -> onCropDone(side, cropped) },
         )
         return

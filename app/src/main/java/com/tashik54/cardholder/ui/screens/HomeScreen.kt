@@ -121,14 +121,12 @@ private fun CardCell(card: Card, onClick: () -> Unit, modifier: Modifier = Modif
                     )
                 }
             }
-            // Есть фото лицевой стороны — целиком вписываем в плитку, без обрезки
+            // Есть фото лицевой стороны — растягиваем по карточке
             front != null -> Image(
                 bitmap = front.asImageBitmap(),
                 contentDescription = card.storeName,
-                contentScale = ContentScale.Fit,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surface),
+                contentScale = ContentScale.FillBounds,
+                modifier = Modifier.fillMaxSize(),
             )
             // Иначе — название магазина
             else -> Column(
