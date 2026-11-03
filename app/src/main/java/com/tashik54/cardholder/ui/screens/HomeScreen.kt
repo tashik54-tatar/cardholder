@@ -1,6 +1,7 @@
 package com.tashik54.cardholder.ui.screens
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -101,29 +102,33 @@ private fun CardCell(card: Card, onClick: () -> Unit, modifier: Modifier = Modif
                     Image(
                         bitmap = front.asImageBitmap(),
                         contentDescription = "${card.storeName} — лицевая сторона",
-                        contentScale = ContentScale.Crop,
+                        contentScale = ContentScale.Fit,
                         modifier = Modifier
                             .weight(1f)
-                            .fillMaxSize(),
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.surface),
                     )
                 }
                 if (back != null) {
                     Image(
                         bitmap = back.asImageBitmap(),
                         contentDescription = "${card.storeName} — сторона со штрихкодом",
-                        contentScale = ContentScale.Crop,
+                        contentScale = ContentScale.Fit,
                         modifier = Modifier
                             .weight(1f)
-                            .fillMaxSize(),
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.surface),
                     )
                 }
             }
-            // Есть фото лицевой стороны — показываем только его
+            // Есть фото лицевой стороны — целиком вписываем в плитку, без обрезки
             front != null -> Image(
                 bitmap = front.asImageBitmap(),
                 contentDescription = card.storeName,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.surface),
             )
             // Иначе — название магазина
             else -> Column(
