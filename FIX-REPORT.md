@@ -1,4 +1,4 @@
-# FIX-REPORT — «Мои карты» v1.1 (исправления по аудиту v1.0)
+# FIX-REPORT — «Мои карты» v1.0.1 (исправления по аудиту v1.0)
 
 Дата: 2026-11-06
 Проект: `E:\AI\ZCode\проекты\cardholder\cardholder-fixed` (копия проекта v1.0 + исправления по AUDIT-REPORT.md).
@@ -6,15 +6,16 @@
 
 ## Сборка
 
-| Параметр | v1.0 (было) | v1.1 (стало) |
+| Параметр | v1.0 (было) | v1.0.1 (стало) |
 |---|---|---|
-| APK | MyCards-v1.0-release.apk (24,5 МБ) | **MyCards-v1.1-release.apk (24,1 МБ)** в корне этой папки |
-| versionCode / versionName | 22 / 1.0 | **23 / 1.1** (проверено по бинарному манифесту APK) |
+| APK | MyCards-v1.0-release.apk (24,5 МБ) | **MyCards-v1.0.1-release.apk (24,1 МБ)** в корне этой папки |
+| versionCode / versionName | 22 / 1.0 | **23 / 1.0.1** (проверено по бинарному манифесту APK; semver-патч поверх 1.0) |
 | Подпись | debug-сертификат («Android Debug») | **собственный ключ `CN=Cardholder`**, схема v2 (проверено apksigner: `Verifies`, v2=true) |
 | Минификация | R8 | R8 (без изменений) |
 | Тесты | 15 (3 файла) | **20 (4 файла), все зелёные** |
 
 Сборка выполнена через ASCII-джанкшн `E:\AI\ZCode\tools\cardholder-build` → эта папка:
+(AGP 8.5.2 отвергает не-ASCII пути). Для будущих пересборок:
 AGP 8.5.2 отвергает не-ASCII пути. Для будущих пересборок:
 ```bat
 cd /d E:\AI\ZCode\tools\cardholder-build
@@ -64,7 +65,7 @@ gradlew.bat assembleRelease
 26. `MainActivityTest` получил assert'ы (RESUMED + decorView).
 27. Нижнее меню скрывается на Detail/Edit (некорректная подсветка исчезла вместе с меню).
 28. `AppSettings` хранит applicationContext и берёт prefs лениво — записи до init не теряются.
-29. Схема версий задокументирована в gradle: v1.1 = код 23.
+ 29. Схема версий задокументирована в gradle: v1.0.1 = код 23 (semver-патч).
 
 ## Тесты (20, все зелёные)
 
@@ -79,12 +80,13 @@ gradlew.bat assembleRelease
 
 ## Публикация
 
-- Коммит `c7db639` «v1.1: fix all 29 audit findings …» запушен в `main` репозитория `tashik54-tatar/cardholder` (29 файлов, +1435/−463).
-- Релиз: **https://github.com/tashik54-tatar/cardholder/releases/tag/v1.1** с ассетом `MyCards-v1.1-release.apk` (24,1 МБ).
+- Коммит `c7db639` «v1.1: fix all 29 audit findings …» и `81f6fd2` «chore: versionName 1.0.1 (semver patch)» запушены в `main` репозитория `tashik54-tatar/cardholder`.
+- Релиз: **https://github.com/tashik54-tatar/cardholder/releases/tag/v1.0.1** с ассетом `MyCards-v1.0.1-release.apk` (24,1 МБ).
+- Промежуточно публиковавшийся релиз «v1.1» удалён вместе с тегом (переименование в semver-патч 1.0.1 по решению владельца).
 - Исправленные исходники синхронизированы в корень репо; папка `cardholder-fixed/` остаётся рядом как локальная копия-поставка (в `.gitignore`).
 
 ## Что осталось (вне скоупа этого прохода)
 
 - `LocalLifecycleOwner` deprecated (warning, не ошибка) — миграция на `androidx.lifecycle.compose.LocalLifecycleOwner` при обновлении lifecycle.
 - Ручная проверка на устройстве: камера/повороты/фонарь прошивки — статически всё покрыто, динамически не гонялось.
-- Обновление с v1.0 поверх не сработает (новый ключ подписи) — только удаление + установка v1.1.
+- Обновление с v1.0 поверх не сработает (новый ключ подписи) — только удаление + установка v1.0.1.
