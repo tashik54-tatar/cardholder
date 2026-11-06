@@ -66,23 +66,32 @@ private sealed interface Screen {
  * поэтому поворот/сворачивание/смерть процесса не сбрасывают приложение
  * на главный экран. Edit хранит id, а не снимок Card: форма всегда
  * редактирует живые данные из БД.
+ *
+ * Значения — строки, а не числа. На части устройств (наблюдалось на
+ * Android 15, TECNO LI6) системная перезапаковка SavedState при повороте
+ * возвращает числа из сохранённых списков другим типом (Integer приходит
+ * как Long), и жёсткий каст `as Int` падает с ClassCastException —
+ * приложение «закрывалось» на повороте с любого экрана. Строки этот
+ * путь искажать не умеет; malformed-состояние честно деградирует в Home.
  */
 private val ScreenSaver: Saver<Screen, Any> = listSaver(
     save = { s: Screen ->
         when (s) {
-            Screen.Home -> listOf(0)
-            Screen.Add -> listOf(1)
-            Screen.Settings -> listOf(2)
-            is Screen.Detail -> listOf(3, s.cardId)
-            is Screen.Edit -> listOf(4, s.cardId)
+            Screen.Home -> listOf("home")
+            Screen.Add -> listOf("add")
+            Screen.Settings -> listOf("settings")
+            is Screen.Detail -> listOf("detail", s.cardId.toString())
+            is Screen.Edit -> listOf("edit", s.cardId.toString())
         }
     },
     restore = { values: List<Any> ->
-        when (values[0] as Int) {
-            1 -> Screen.Add
-            2 -> Screen.Settings
-            3 -> Screen.Detail(values[1] as Long)
-            4 -> Screen.Edit(values[1] as Long)
+        when (values[0] as? String) {
+            "add" -> Screen.Add
+            "settings" -> Screen.Settings
+            "detail" -> (values.getOrNull(1) as? String)
+                ?.toLongOrNull()?.let(Screen::Detail) ?: Screen.Home
+            "edit" -> (values.getOrNull(1) as? String)
+                ?.toLongOrNull()?.let(Screen::Edit) ?: Screen.Home
             else -> Screen.Home
         }
     },
