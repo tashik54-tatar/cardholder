@@ -1,13 +1,16 @@
 package com.tashik54.cardholder
 
+import android.os.Looper
+import android.view.View
+import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
-import android.os.Looper
 import org.robolectric.Shadows.shadowOf
-import android.view.View
+import org.robolectric.annotation.Config
 
 /**
  * Проверка, что приложение запускается без падения: onCreate + первая
@@ -20,15 +23,19 @@ class MainActivityTest {
     @Test
     fun activityLaunchesAndComposes() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            var decor: View? = null
             scenario.onActivity { activity ->
-                val view: View = activity.window.decorView
-                view.measure(
+                decor = activity.window.decorView
+                decor!!.measure(
                     View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY),
                     View.MeasureSpec.makeMeasureSpec(2400, View.MeasureSpec.EXACTLY),
                 )
-                view.layout(0, 0, 1080, 2400)
+                decor!!.layout(0, 0, 1080, 2400)
             }
             shadowOf(Looper.getMainLooper()).idle()
+            // Композиция прошла: контент окна создан, Activity живо
+            assertNotNull(decor)
+            assertEquals(Lifecycle.State.RESUMED, scenario.state)
         }
     }
 }

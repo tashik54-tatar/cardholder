@@ -10,9 +10,9 @@ fun resolveCodeType(value: String, formatName: String?): CodeType {
     // Ручной ввод: URL и похожие на ссылку значения — QR (телефонные
     // сканеры ждут от QR именно ссылку), остальное — штрихкод.
     val v = value.trim().lowercase()
-    return if (v.startsWith("http") || v.startsWith("www") || v.contains("://")) {
-        CodeType.QR
-    } else {
-        CodeType.BARCODE
-    }
+    val looksLikeUrl = v.startsWith("http://") ||
+        v.startsWith("https://") ||
+        v.startsWith("www.") ||
+        v.contains("://")
+    return if (looksLikeUrl) CodeType.QR else CodeType.BARCODE
 }

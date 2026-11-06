@@ -33,12 +33,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.tashik54.cardholder.R
 import com.tashik54.cardholder.data.AppSettings
 import com.tashik54.cardholder.data.CardRepository
 import com.tashik54.cardholder.data.CsvCodec
@@ -77,11 +78,12 @@ fun SettingsScreen(
                     } != null
                 }.getOrDefault(false)
             }
-            Toast.makeText(
-                context,
-                if (ok) "Экспортировано карт: ${cards.size}" else "Не удалось сохранить файл",
-                Toast.LENGTH_SHORT,
-            ).show()
+            val message = if (ok) {
+                context.getString(R.string.toast_export_ok, cards.size)
+            } else {
+                context.getString(R.string.toast_export_failed)
+            }
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -91,10 +93,17 @@ fun SettingsScreen(
         if (uri == null) return@rememberLauncherForActivityResult
         scope.launch {
             val result = importCsv(context, uri, repository)
-            val message = buildString {
-                append("Импортировано карт: ${result.imported}")
-                if (result.skippedRows > 0) append(", пропущено строк: ${result.skippedRows}")
-            }
+            val message = context.getString(R.string.import_result_imported, result.imported) +
+                if (result.duplicates > 0) {
+                    context.getString(R.string.import_result_dupes, result.duplicates)
+                } else {
+                    ""
+                } +
+                if (result.skippedRows > 0) {
+                    context.getString(R.string.import_result_skipped, result.skippedRows)
+                } else {
+                    ""
+                }
             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
         }
     }
@@ -111,21 +120,21 @@ fun SettingsScreen(
             IconButton(onClick = onBack) {
                 Icon(
                     Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Назад",
+                    contentDescription = stringResource(R.string.cd_back),
                     tint = MaterialTheme.colorScheme.onSurface,
                 )
             }
             Text(
-                text = "Настройки",
+                text = stringResource(R.string.title_settings),
                 style = MaterialTheme.typography.headlineMedium,
             )
         }
         Spacer(Modifier.height(16.dp))
 
-        SettingsRow(icon = Icons.Filled.KeyboardArrowDown, title = "Импорт CSV") {
+        SettingsRow(icon = Icons.Filled.KeyboardArrowDown, title = stringResource(R.string.row_import)) {
             importLauncher.launch(arrayOf("text/csv", "text/comma-separated-values", "text/plain"))
         }
-        SettingsRow(icon = Icons.Filled.KeyboardArrowUp, title = "Экспорт CSV") {
+        SettingsRow(icon = Icons.Filled.KeyboardArrowUp, title = stringResource(R.string.row_export)) {
             val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
             exportLauncher.launch("my-cards-$date.csv")
         }
@@ -149,7 +158,7 @@ fun SettingsScreen(
             )
             Spacer(Modifier.width(16.dp))
             Text(
-                text = "Скрывать фото на странице карты",
+                text = stringResource(R.string.hide_photos_setting),
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.weight(1f),
             )
@@ -161,43 +170,58 @@ fun SettingsScreen(
 
         // Тема: авто / светлая / тёмная
         var themeDialog by remember { mutableStateOf(false) }
+        val themeTitle = when (AppSettings.themeMode.value) {
+            AppSettings.THEME_LIGHT -> stringResource(R.string.theme_setting_light)
+            AppSettings.THEME_DARK -> stringResource(R.string.theme_setting_dark)
+            else -> stringResource(R.string.theme_setting_auto)
+        }
         SettingsRow(
             icon = Icons.Filled.DarkMode,
-            title = "Тема: " + when (AppSettings.themeMode.value) {
-                AppSettings.THEME_LIGHT -> "светлая"
-                AppSettings.THEME_DARK -> "тёмная"
-                else -> "авто (как в системе)"
-            },
+            title = themeTitle,
         ) { themeDialog = true }
         if (themeDialog) {
             AlertDialog(
                 onDismissRequest = { themeDialog = false },
-                title = { Text("Тема") },
+                title = { Text(stringResource(R.string.theme_dialog_title)) },
                 text = {
                     Column {
-                        ThemeOption("Авто (как в системе)", AppSettings.THEME_AUTO) { themeDialog = false }
-                        ThemeOption("Светлая", AppSettings.THEME_LIGHT) { themeDialog = false }
-                        ThemeOption("Тёмная", AppSettings.THEME_DARK) { themeDialog = false }
+                        ThemeOption(
+                            stringResource(R.string.theme_option_auto),
+                            AppSettings.THEME_AUTO,
+                        ) { themeDialog = false }
+                        ThemeOption(
+                            stringResource(R.string.theme_option_light),
+                            AppSettings.THEME_LIGHT,
+                        ) { themeDialog = false }
+                        ThemeOption(
+                            stringResource(R.string.theme_option_dark),
+                            AppSettings.THEME_DARK,
+                        ) { themeDialog = false }
                     }
                 },
                 confirmButton = {},
                 dismissButton = {
-                    TextButton(onClick = { themeDialog = false }) { Text("Отмена") }
+                    TextButton(onClick = { themeDialog = false }) {
+                        Text(stringResource(R.string.theme_action_cancel))
+                    }
                 },
             )
         }
 
         Spacer(Modifier.padding(top = 16.dp))
         Text(
-            text = "CSV переносит данные карт (название, тип и значение кода). " +
-                "Фото сторон остаются только в приложении.",
+            text = stringResource(R.string.csv_note),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
 
-private data class ImportSummary(val imported: Int, val skippedRows: Int)
+private data class ImportSummary(
+    val imported: Int,
+    val duplicates: Int,
+    val skippedRows: Int,
+)
 
 private suspend fun importCsv(
     context: android.content.Context,
@@ -208,13 +232,12 @@ private suspend fun importCsv(
         context.contentResolver.openInputStream(uri)?.use { input ->
             input.readBytes().toString(Charsets.UTF_8)
         }
-    }.getOrNull() ?: return@withContext ImportSummary(0, 0)
+    }.getOrNull() ?: return@withContext ImportSummary(0, 0, 0)
 
     val parsed = CsvCodec.parse(text)
-    for (card in parsed.cards) {
-        repository.add(card)
-    }
-    ImportSummary(parsed.cards.size, parsed.skippedRows)
+    // Дедупликация и атомарная вставка — в репозитории
+    val result = repository.importCards(parsed.cards)
+    ImportSummary(result.imported, result.duplicates, parsed.skippedRows)
 }
 
 @Composable

@@ -22,3 +22,7 @@ Thumbs.db
 # Keystore (не храним подписи в репозитории)
 *.jks
 *.keystore
+keystore/keystore.properties
+
+# local fixed-copy deliverable (synced into repo root)
+cardholder-fixed/

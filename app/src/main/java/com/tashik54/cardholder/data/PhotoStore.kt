@@ -12,14 +12,17 @@ import java.util.UUID
  */
 object PhotoStore {
 
+    private const val PHOTOS_DIR = "photos"
+    private const val CAPTURES_DIR = "captures"
+
     /** Файл для снимка камеры (TakePicture требует заранее созданный Uri). */
     fun newCaptureFile(context: Context): File =
-        File(context.filesDir, "captures").apply { mkdirs() }
+        File(context.filesDir, CAPTURES_DIR).apply { mkdirs() }
             .resolve("capture_${UUID.randomUUID()}.jpg")
 
     /** Сохраняет обрезанное фото в постоянное хранилище, возвращает путь. */
     fun save(context: Context, bitmap: Bitmap): String {
-        val dir = File(context.filesDir, "photos").apply { mkdirs() }
+        val dir = File(context.filesDir, PHOTOS_DIR).apply { mkdirs() }
         val file = dir.resolve("photo_${UUID.randomUUID()}.jpg")
         file.outputStream().use { out ->
             bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
@@ -27,9 +30,29 @@ object PhotoStore {
         return file.absolutePath
     }
 
-    /** Удаляет файл фото (при замене стороны). */
-    fun delete(path: String?) {
-        if (path != null) File(path).delete()
+    /**
+     * Удаляет файл фото (при замене стороны). Путь обязан указывать
+     * внутрь files/photos — пути приходят из БД, поэтому чужие/подменённые
+     * пути молча игнорируются (защита в глубину от path traversal).
+     */
+    fun delete(context: Context, path: String?) {
+        if (path == null) return
+        runCatching {
+            val photosDir = File(context.filesDir, PHOTOS_DIR).canonicalFile
+            val target = File(path).canonicalFile
+            if (target.parentFile == photosDir) target.delete()
+        }
+    }
+
+    /**
+     * Чистит временный каталог captures/: снимки камеры удаляются
+     * сразу после обработки, но при смерти процесса между снимком и
+     * обработкой файлы могли остаться — убираем их при старте приложения.
+     */
+    fun cleanupCaptures(context: Context) {
+        runCatching {
+            File(context.filesDir, CAPTURES_DIR).listFiles()?.forEach { it.delete() }
+        }
     }
 
     /** Загрузка с даунсэмплом до maxDim по большей стороне. */
@@ -75,7 +98,8 @@ object PhotoStore {
 
     /**
      * Загрузка снимка камеры с учётом поворота из EXIF — иначе фото
-     * с некоторых устройств сохраняется «лёжа на боку».
+     * с некоторых устройств сохраняется «лёжа на боку». TRANSPOSE/TRANSVERSE
+     * (поворот + отражение по горизонтали) тоже учитываются.
      */
     fun loadCapture(file: File, maxDim: Int = 2048): Bitmap? {
         if (!file.exists()) return null
@@ -91,7 +115,9 @@ object PhotoStore {
             BitmapFactory.Options().apply { inSampleSize = sample },
         ) ?: return null
 
-        val rotation = when (
+        val degrees: Float
+        val flipX: Boolean
+        when (
             try {
                 androidx.exifinterface.media.ExifInterface(file.absolutePath).getAttributeInt(
                     androidx.exifinterface.media.ExifInterface.TAG_ORIENTATION,
@@ -101,13 +127,30 @@ object PhotoStore {
                 androidx.exifinterface.media.ExifInterface.ORIENTATION_NORMAL
             }
         ) {
-            androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_90 -> 90f
-            androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_180 -> 180f
-            androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_270 -> 270f
-            else -> 0f
+            androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_90 -> {
+                degrees = 90f; flipX = false
+            }
+            androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_180 -> {
+                degrees = 180f; flipX = false
+            }
+            androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_270 -> {
+                degrees = 270f; flipX = false
+            }
+            androidx.exifinterface.media.ExifInterface.ORIENTATION_TRANSPOSE -> {
+                degrees = 90f; flipX = true
+            }
+            androidx.exifinterface.media.ExifInterface.ORIENTATION_TRANSVERSE -> {
+                degrees = 270f; flipX = true
+            }
+            else -> {
+                degrees = 0f; flipX = false
+            }
         }
-        if (rotation == 0f) return bitmap
-        val matrix = android.graphics.Matrix().apply { postRotate(rotation) }
+        if (degrees == 0f && !flipX) return bitmap
+        val matrix = android.graphics.Matrix().apply {
+            postRotate(degrees)
+            if (flipX) postScale(-1f, 1f)
+        }
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
     }
 }

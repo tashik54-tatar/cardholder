@@ -75,4 +75,26 @@ class CsvCodecTest {
         assertEquals(1, parsed.cards.size)
         assertEquals("", parsed.cards[0].codeValue)
     }
+
+    @Test
+    fun `csv-инъекция нейтрализуется и не теряет данные`() {
+        // Поле, начинающееся с =/+/-/@, в Excel исполнилось бы формулой;
+        // экспорт добавляет апостроф, импорт его снимает — round-trip точен
+        val dangerous = listOf(
+            Card(storeName = "=HYPERLINK(\"http://evil\")", codeType = CodeType.QR, codeValue = "https://ok.example"),
+            Card(storeName = "+СЧЁТ(1;2)", codeType = CodeType.BARCODE, codeValue = "123"),
+            Card(storeName = "-2+3", codeType = CodeType.QR, codeValue = "https://x.example"),
+            Card(storeName = "@cmd", codeType = CodeType.QR, codeValue = "https://y.example"),
+            // Апостроф в начале обычного текста не должен ломаться сам по себе
+            Card(storeName = "'цитата'", codeType = CodeType.QR, codeValue = "https://z.example"),
+        )
+        val exported = CsvCodec.export(dangerous)
+        // В файле опасные поля получили защитный префикс
+        org.junit.Assert.assertTrue(exported.contains("'=HYPERLINK"))
+        val parsed = CsvCodec.parse(exported)
+        assertEquals(dangerous.size, parsed.cards.size)
+        dangerous.zip(parsed.cards).forEach { (src, out) ->
+            assertEquals(src.storeName, out.storeName)
+        }
+    }
 }

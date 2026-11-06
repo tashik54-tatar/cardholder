@@ -38,10 +38,12 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.tashik54.cardholder.R
 import kotlin.math.abs
 
 /**
@@ -75,84 +77,84 @@ fun PhotoCropScreen(
             decorFitsSystemWindows = false,
         ),
     ) {
-    Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
-        Text(
-            text = "Обрежьте фото",
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(top = 16.dp, bottom = 16.dp),
-        )
-
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
-        ) {
-            Image(
-                bitmap = bitmap.asImageBitmap(),
-                contentDescription = "Фото для обрезки",
-                contentScale = ContentScale.Fit,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .onSizeChanged { canvasSize = it },
+        Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
+            Text(
+                text = stringResource(R.string.crop_title),
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(top = 16.dp, bottom = 16.dp),
             )
-            if (canvasSize != IntSize.Zero) {
-                // Пропорции показанного фото (ContentScale.Fit вписывает его в Box)
-                val imgW = canvasSize.width.toFloat()
-                val imgH = canvasSize.height.toFloat()
-                val bmpAspect = bitmap.width.toFloat() / bitmap.height
-                val boxAspect = imgW / imgH
-                val shownW: Float
-                val shownH: Float
-                if (bmpAspect > boxAspect) {
-                    shownW = imgW
-                    shownH = imgW / bmpAspect
-                } else {
-                    shownH = imgH
-                    shownW = imgH * bmpAspect
-                }
-                val left = (imgW - shownW) / 2f
-                val top = (imgH - shownH) / 2f
-                val shown = Offset(left, top)
 
-                // Стартовая рамка под формат карты: пересчёт пропорции
-                // из экранных координат в координаты фото.
-                if (lockCardRatio && !rectInitialized && shownW > 0f && shownH > 0f) {
-                    // w/h в координатах фото, дающий 1.586 на экране
-                    val normRatio = cardRatio * shownH / shownW
-                    var w = 0.9f
-                    var h = w / normRatio
-                    if (h > 0.95f) { h = 0.95f; w = h * normRatio }
-                    rect = Rect(0.5f - w / 2, 0.5f - h / 2, 0.5f + w / 2, 0.5f + h / 2)
-                    rectInitialized = true
-                }
-
-                CropOverlay(
-                    rect = rect,
-                    areaOffset = shown,
-                    areaSize = Size(shownW, shownH),
-                    aspectRatio = if (lockCardRatio) cardRatio else null,
-                    onRectChange = { rect = it },
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+            ) {
+                Image(
+                    bitmap = bitmap.asImageBitmap(),
+                    contentDescription = stringResource(R.string.cd_photo_for_crop),
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .onSizeChanged { canvasSize = it },
                 )
-            }
-        }
+                if (canvasSize != IntSize.Zero) {
+                    // Пропорции показанного фото (ContentScale.Fit вписывает его в Box)
+                    val imgW = canvasSize.width.toFloat()
+                    val imgH = canvasSize.height.toFloat()
+                    val bmpAspect = bitmap.width.toFloat() / bitmap.height
+                    val boxAspect = imgW / imgH
+                    val shownW: Float
+                    val shownH: Float
+                    if (bmpAspect > boxAspect) {
+                        shownW = imgW
+                        shownH = imgW / bmpAspect
+                    } else {
+                        shownH = imgH
+                        shownW = imgH * bmpAspect
+                    }
+                    val left = (imgW - shownW) / 2f
+                    val top = (imgH - shownH) / 2f
+                    val shown = Offset(left, top)
 
-        Spacer(Modifier.height(16.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedButton(
-                onClick = { onDone(null) },
-                shape = MaterialTheme.shapes.large,
-                modifier = Modifier.weight(1f),
-            ) { Text("Отмена") }
-            Button(
-                onClick = {
-                    onDone(cropBitmap(bitmap, rect))
-                },
-                shape = MaterialTheme.shapes.large,
-                modifier = Modifier.weight(1f),
-            ) { Text("Готово") }
-        }
-        Spacer(Modifier.height(16.dp))
+                    // Стартовая рамка под формат карты: пересчёт пропорции
+                    // из экранных координат в координаты фото.
+                    if (lockCardRatio && !rectInitialized && shownW > 0f && shownH > 0f) {
+                        // w/h в координатах фото, дающий 1.586 на экране
+                        val normRatio = cardRatio * shownH / shownW
+                        var w = 0.9f
+                        var h = w / normRatio
+                        if (h > 0.95f) { h = 0.95f; w = h * normRatio }
+                        rect = Rect(0.5f - w / 2, 0.5f - h / 2, 0.5f + w / 2, 0.5f + h / 2)
+                        rectInitialized = true
+                    }
+
+                    CropOverlay(
+                        rect = rect,
+                        areaOffset = shown,
+                        areaSize = Size(shownW, shownH),
+                        aspectRatio = if (lockCardRatio) cardRatio else null,
+                        onRectChange = { rect = it },
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedButton(
+                    onClick = { onDone(null) },
+                    shape = MaterialTheme.shapes.large,
+                    modifier = Modifier.weight(1f),
+                ) { Text(stringResource(R.string.action_cancel)) }
+                Button(
+                    onClick = {
+                        onDone(cropBitmap(bitmap, rect))
+                    },
+                    shape = MaterialTheme.shapes.large,
+                    modifier = Modifier.weight(1f),
+                ) { Text(stringResource(R.string.action_done)) }
+            }
+            Spacer(Modifier.height(16.dp))
         }
     }
 }

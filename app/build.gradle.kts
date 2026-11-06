@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -13,16 +15,13 @@ android {
         applicationId = "com.tashik54.cardholder"
         minSdk = 26
         targetSdk = 34
-        versionCode = 22
-        versionName = "1.0"
+        // Схема версий: versionCode монотонно растёт, versionName — релизная
+        // метка пользователя (v1.0 = код 22, v1.1 = код 23 — аудит + фиксы).
+        versionCode = 23
+        versionName = "1.1"
     }
 
-    // Личная подпись релиза debug-ключом — APK ставится на устройство
-    signingConfigs {
-        getByName("debug") { /* создаётся AGP автоматически */ }
-    }
-
-    // Имя APK с версией: MyCards-v0.7.1-debug.apk
+    // Имя APK с версией: MyCards-v1.1-release.apk
     applicationVariants.all {
         outputs.all {
             (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl).outputFileName =
@@ -30,10 +29,28 @@ android {
         }
     }
 
+    // Release подписывается собственным ключом (keystore/release.jks),
+    // параметры — в keystore/keystore.properties (не коммитить в git).
+    // Если файла нет (чужая машина) — сборка честно падает с подсказкой,
+    // а не молча подписывает debug-ключом.
+    val keystorePropsFile = rootProject.file("keystore/keystore.properties")
+    val keystoreProps = Properties().apply {
+        if (keystorePropsFile.exists()) keystorePropsFile.inputStream().use { load(it) }
+    }
+
+    signingConfigs {
+        create("release") {
+            storeFile = rootProject.file("keystore/release.jks")
+            storePassword = keystoreProps.getProperty("storePassword")
+            keyAlias = keystoreProps.getProperty("keyAlias")
+            keyPassword = keystoreProps.getProperty("keyPassword")
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

@@ -8,7 +8,6 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.tashik54.cardholder.data.Card
 import com.tashik54.cardholder.data.CardRepository
 import com.tashik54.cardholder.data.CodeType
-import com.tashik54.cardholder.data.PhotoStore
 import kotlinx.coroutines.launch
 
 class AddCardViewModel(private val repository: CardRepository) : ViewModel() {
@@ -45,12 +44,13 @@ class AddCardViewModel(private val repository: CardRepository) : ViewModel() {
         }
     }
 
-    /** Удаляет карту вместе с файлами фото и вызывает onDone. */
+    /**
+     * Удаляет карту и её фото (порядок согласует репозиторий:
+     * сначала запись в БД, потом файлы) и вызывает onDone.
+     */
     fun delete(card: Card, onDone: () -> Unit) {
         viewModelScope.launch {
-            PhotoStore.delete(card.frontPhotoPath)
-            PhotoStore.delete(card.backPhotoPath)
-            repository.delete(card)
+            repository.deleteCardWithPhotos(card)
             onDone()
         }
     }

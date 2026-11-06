@@ -18,16 +18,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.tashik54.cardholder.R
 import com.tashik54.cardholder.data.Card
-import com.tashik54.cardholder.data.PhotoStore
+import com.tashik54.cardholder.ui.rememberPhoto
 
 /**
  * Главный экран: сетка карт. У карт с фото лицевой стороны — только фото,
@@ -46,12 +47,12 @@ fun HomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = "Нет карт",
+                text = stringResource(R.string.home_empty_title),
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onSurface,
             )
             Text(
-                text = "Нажмите «+», чтобы добавить первую",
+                text = stringResource(R.string.home_empty_hint),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -80,6 +81,10 @@ fun HomeScreen(
 
 @Composable
 private fun CardCell(card: Card, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    // Декод JPEG — асинхронно, вне главного потока (раньше декодировалось
+    // в remember прямо в композиции — сетка карт подвисала)
+    val front = rememberPhoto(card.frontPhotoPath, maxDim = 512)
+    val back = rememberPhoto(card.backPhotoPath, maxDim = 512)
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(20.dp),
@@ -89,19 +94,15 @@ private fun CardCell(card: Card, onClick: () -> Unit, modifier: Modifier = Modif
             .fillMaxWidth()
             .aspectRatio(1.586f), // пропорция банковской карты
     ) {
-        val front = remember(card.frontPhotoPath) {
-            PhotoStore.load(card.frontPhotoPath, maxDim = 512)
-        }
-        val back = remember(card.backPhotoPath) {
-            PhotoStore.load(card.backPhotoPath, maxDim = 512)
-        }
         when {
             // Карты без кода (только фото): обе стороны рядом
             card.codeValue.isBlank() && (front != null || back != null) -> Row {
                 if (front != null) {
                     Image(
                         bitmap = front.asImageBitmap(),
-                        contentDescription = "${card.storeName} — лицевая сторона",
+                        contentDescription = stringResource(
+                            R.string.cd_card_front, card.storeName,
+                        ),
                         contentScale = ContentScale.Fit,
                         modifier = Modifier
                             .weight(1f)
@@ -112,7 +113,9 @@ private fun CardCell(card: Card, onClick: () -> Unit, modifier: Modifier = Modif
                 if (back != null) {
                     Image(
                         bitmap = back.asImageBitmap(),
-                        contentDescription = "${card.storeName} — сторона со штрихкодом",
+                        contentDescription = stringResource(
+                            R.string.cd_card_back, card.storeName,
+                        ),
                         contentScale = ContentScale.Fit,
                         modifier = Modifier
                             .weight(1f)
@@ -124,7 +127,7 @@ private fun CardCell(card: Card, onClick: () -> Unit, modifier: Modifier = Modif
             // Есть фото лицевой стороны — растягиваем по карточке
             front != null -> Image(
                 bitmap = front.asImageBitmap(),
-                contentDescription = card.storeName,
+                contentDescription = stringResource(R.string.cd_card_photo, card.storeName),
                 contentScale = ContentScale.FillBounds,
                 modifier = Modifier.fillMaxSize(),
             )

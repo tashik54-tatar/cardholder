@@ -27,4 +27,11 @@ class CodeTypeResolverTest {
         assertEquals(CodeType.BARCODE, resolveCodeType("ABC-123456", null))
         assertEquals(CodeType.BARCODE, resolveCodeType("", null))
     }
+
+    @Test
+    fun `строка похожая на http но не URL - штрихкод`() {
+        // Раньше эвристика была startsWith("http") и ловила «httpfoo»
+        assertEquals(CodeType.BARCODE, resolveCodeType("httpfoo", null))
+        assertEquals(CodeType.BARCODE, resolveCodeType("https-shop.ru", null))
+    }
 }

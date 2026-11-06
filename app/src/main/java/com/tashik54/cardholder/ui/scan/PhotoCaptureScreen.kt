@@ -28,6 +28,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,16 +40,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
+import com.tashik54.cardholder.R
 import com.tashik54.cardholder.data.PhotoStore
 import java.io.File
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
+/** Сколько ждём колбэк камеры, прежде чем разблокировать затвор (сбой драйвера). */
+private const val CAPTURE_TIMEOUT_MS = 10_000L
 
 /**
  * Съёмка фото стороны карты внутри приложения: живое превью с подсказкой
@@ -87,12 +96,24 @@ fun PhotoCaptureScreen(
             .build()
     }
     var busy by remember { mutableStateOf(false) }
+    var timeoutJob by remember { mutableStateOf<Job?>(null) }
     val scope = rememberCoroutineScope()
 
+    // Привязка камеры к lifecycle Activity; ссылка на провайдер хранится,
+    // чтобы гарантированно отвязать камеру при закрытии экрана — иначе
+    // сенсор и превью продолжали жить до выхода из приложения.
+    val boundProvider = remember { mutableStateOf<ProcessCameraProvider?>(null) }
+    // Флаг «композиция жива»: колбэк future может прийти уже после ухода
+    val active = remember { AtomicBoolean(true) }
+
     LaunchedEffect(hasPermission) {
-        if (!hasPermission) return@LaunchedEffect
+        if (!hasPermission) {
+            boundProvider.value?.unbindAll()
+            return@LaunchedEffect
+        }
         val providerFuture = ProcessCameraProvider.getInstance(context)
         providerFuture.addListener({
+            if (!active.get()) return@addListener
             val provider = providerFuture.get()
             val preview = Preview.Builder().build().also {
                 it.setSurfaceProvider(previewView.surfaceProvider)
@@ -104,18 +125,41 @@ fun PhotoCaptureScreen(
                 preview,
                 imageCapture,
             )
+            boundProvider.value = provider
         }, ContextCompat.getMainExecutor(context))
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            active.set(false)
+            runCatching { boundProvider.value?.unbindAll() }
+            timeoutJob?.cancel()
+        }
     }
 
     fun shoot() {
         if (busy) return
         busy = true
         val file = PhotoStore.newCaptureFile(context)
+        // Страховка от зависшего колбэка камеры: без таймаута кнопка
+        // затвора оставалась бы мёртвой навсегда.
+        timeoutJob = scope.launch {
+            delay(CAPTURE_TIMEOUT_MS)
+            if (busy) {
+                busy = false
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.toast_camera_timeout),
+                    Toast.LENGTH_SHORT,
+                ).show()
+            }
+        }
         imageCapture.takePicture(
             ImageCapture.OutputFileOptions.Builder(file).build(),
             ContextCompat.getMainExecutor(context),
             object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                    timeoutJob?.cancel()
                     scope.launch {
                         val bitmap = withContext(Dispatchers.IO) { PhotoStore.loadCapture(file) }
                         file.delete()
@@ -125,7 +169,7 @@ fun PhotoCaptureScreen(
                             busy = false
                             Toast.makeText(
                                 context,
-                                "Не удалось обработать снимок, попробуйте ещё раз",
+                                context.getString(R.string.toast_capture_failed),
                                 Toast.LENGTH_SHORT,
                             ).show()
                         }
@@ -133,9 +177,14 @@ fun PhotoCaptureScreen(
                 }
 
                 override fun onError(exception: ImageCaptureException) {
+                    timeoutJob?.cancel()
                     file.delete()
                     busy = false
-                    Toast.makeText(context, "Ошибка камеры, попробуйте ещё раз", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.toast_camera_error),
+                        Toast.LENGTH_SHORT,
+                    ).show()
                 }
             },
         )
@@ -155,57 +204,61 @@ fun PhotoCaptureScreen(
                 .fillMaxSize()
                 .background(Color.Black),
         ) {
-        if (hasPermission) {
-            AndroidView(factory = { previewView }, modifier = Modifier.fillMaxSize())
-        } else {
+            if (hasPermission) {
+                AndroidView(factory = { previewView }, modifier = Modifier.fillMaxSize())
+            } else {
+                Text(
+                    text = stringResource(R.string.camera_permission_needed),
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.align(Alignment.Center).padding(32.dp),
+                )
+            }
+
+            // Подсказка: что фотографируем
             Text(
-                text = "Нужно разрешение на камеру",
+                text = instruction,
                 color = Color.White,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.align(Alignment.Center).padding(32.dp),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .background(Color.Black.copy(alpha = 0.45f))
+                    .padding(top = 56.dp, bottom = 16.dp, start = 56.dp, end = 56.dp),
             )
-        }
 
-        // Подсказка: что фотографируем
-        Text(
-            text = instruction,
-            color = Color.White,
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .fillMaxWidth()
-                .background(Color.Black.copy(alpha = 0.45f))
-                .padding(top = 56.dp, bottom = 16.dp, start = 56.dp, end = 56.dp),
-        )
+            IconButton(
+                onClick = onClose,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(12.dp),
+            ) {
+                Icon(
+                    Icons.Filled.Close,
+                    contentDescription = stringResource(R.string.cd_cancel),
+                    tint = Color.White,
+                )
+            }
 
-        IconButton(
-            onClick = onClose,
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(12.dp),
-        ) {
-            Icon(Icons.Filled.Close, contentDescription = "Отмена", tint = Color.White)
-        }
-
-        // Кнопка затвора
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 40.dp)
-                .size(76.dp)
-                .background(Color.White, CircleShape)
-                .clickable(enabled = !busy && hasPermission) { shoot() },
-        ) {
+            // Кнопка затвора
             Box(
-                Modifier
-                    .size(62.dp)
-                    .background(
-                        if (busy) Color.LightGray else Color.Black.copy(alpha = 0.85f),
-                        CircleShape,
-                    ),
-            )
-        }
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 40.dp)
+                    .size(76.dp)
+                    .background(Color.White, CircleShape)
+                    .clickable(enabled = !busy && hasPermission) { shoot() },
+            ) {
+                Box(
+                    Modifier
+                        .size(62.dp)
+                        .background(
+                            if (busy) Color.LightGray else Color.Black.copy(alpha = 0.85f),
+                            CircleShape,
+                        ),
+                )
+            }
         }
     }
 }

@@ -1,6 +1,5 @@
 package com.tashik54.cardholder.ui.screens
 
-import android.graphics.Bitmap
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -52,20 +51,21 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.tashik54.cardholder.data.Card
+import com.tashik54.cardholder.R
 import com.tashik54.cardholder.data.AppSettings
+import com.tashik54.cardholder.data.Card
 import com.tashik54.cardholder.data.CardRepository
 import com.tashik54.cardholder.data.CodeType
-import com.tashik54.cardholder.data.CodeRenderer
-import com.tashik54.cardholder.data.PhotoStore
 import com.tashik54.cardholder.ui.CardDetailViewModel
+import com.tashik54.cardholder.ui.rememberCodeBitmap
+import com.tashik54.cardholder.ui.rememberPhoto
 
 /**
  * Экран карты: отрисованный штрихкод или QR крупно на белом фоне —
@@ -103,7 +103,7 @@ fun CardScreen(
             IconButton(onClick = onBack) {
                 Icon(
                     Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Назад",
+                    contentDescription = stringResource(R.string.cd_back),
                     tint = MaterialTheme.colorScheme.onSurface,
                 )
             }
@@ -115,23 +115,32 @@ fun CardScreen(
             IconButton(onClick = { onEdit(current) }) {
                 Icon(
                     Icons.Filled.Edit,
-                    contentDescription = "Редактировать",
+                    contentDescription = stringResource(R.string.cd_edit),
                     tint = MaterialTheme.colorScheme.onSurface,
                 )
             }
         }
 
-            if (current.codeValue.isNotBlank()) {
-                val bitmap = remember(current.id, current.codeValue, current.codeType, current.barcodeFormat) {
-                    CodeRenderer.render(current.codeValue, current.codeType, current.barcodeFormat)
-                }
-
+        val hasCodeValue = current.codeValue.isNotBlank()
+        if (hasCodeValue) {
+            // Рендер асинхронный; если значение закодировать нельзя
+            // (например, кириллица для штрихкода) — честное сообщение
+            // вместо падания экрана.
+            val bitmap = rememberCodeBitmap(
+                value = current.codeValue,
+                codeType = current.codeType,
+                barcodeFormat = current.barcodeFormat,
+                width = 1080,
+                height = 360,
+            )
+            if (bitmap != null) {
                 var codeFullscreen by rememberSaveable { mutableStateOf(false) }
                 CodePanel(bitmap, current, onClick = { codeFullscreen = true })
                 if (codeFullscreen) {
                     FullscreenCodeDialog(
                         card = current,
                         onDismiss = { codeFullscreen = false },
+                        fallback = bitmap,
                     )
                 }
 
@@ -147,9 +156,18 @@ fun CardScreen(
                         .padding(horizontal = 24.dp),
                 )
             } else {
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(16.dp))
                 Text(
-                    text = "Код не указан — карта хранит только фото сторон",
+                    text = stringResource(R.string.code_render_failed),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp),
+                )
+                Text(
+                    text = current.codeValue,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -158,56 +176,76 @@ fun CardScreen(
                         .padding(horizontal = 24.dp),
                 )
             }
+        } else {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = stringResource(R.string.no_code_hint),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
+            )
+        }
 
-            // Фото сторон: по настройке скрыты за кнопкой; тап по фото — на весь экран
-            if (current.frontPhotoPath != null || current.backPhotoPath != null) {
-                val hidePhotos = AppSettings.hidePhotosOnCardPage.value
-                var photosOpen by rememberSaveable { mutableStateOf(!hidePhotos) }
-                if (hidePhotos) {
-                    Spacer(Modifier.height(16.dp))
-                    OutlinedButton(
-                        onClick = { photosOpen = !photosOpen },
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier.align(Alignment.CenterHorizontally),
-                    ) {
-                        Icon(
-                            Icons.Filled.PhotoLibrary,
-                            contentDescription = null,
-                            modifier = Modifier.padding(end = 6.dp),
-                        )
-                        Text(if (photosOpen) "Скрыть фото" else "Показать фото")
-                    }
-                }
-                AnimatedVisibility(
-                    visible = photosOpen || !hidePhotos,
-                    enter = fadeIn(tween(200)) + expandVertically(tween(200)),
-                    exit = fadeOut(tween(150)) + shrinkVertically(tween(150)),
+        // Фото сторон: по настройке скрыты за кнопкой; тап по фото — на весь экран
+        if (current.frontPhotoPath != null || current.backPhotoPath != null) {
+            val hidePhotos = AppSettings.hidePhotosOnCardPage.value
+            var photosOpen by rememberSaveable { mutableStateOf(!hidePhotos) }
+            if (hidePhotos) {
+                Spacer(Modifier.height(16.dp))
+                OutlinedButton(
+                    onClick = { photosOpen = !photosOpen },
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
                 ) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        var viewingPath by remember { mutableStateOf<String?>(null) }
-                        PhotoView(
-                            label = "Лицевая сторона",
-                            path = current.frontPhotoPath,
-                            onClick = { current.frontPhotoPath?.let { viewingPath = it } },
-                            modifier = Modifier.weight(1f),
+                    Icon(
+                        Icons.Filled.PhotoLibrary,
+                        contentDescription = null,
+                        modifier = Modifier.padding(end = 6.dp),
+                    )
+                    Text(
+                        stringResource(
+                            if (photosOpen) R.string.hide_photos else R.string.show_photos,
+                        ),
+                    )
+                }
+            }
+            AnimatedVisibility(
+                visible = photosOpen || !hidePhotos,
+                enter = fadeIn(tween(200)) + expandVertically(tween(200)),
+                exit = fadeOut(tween(150)) + shrinkVertically(tween(150)),
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    var viewingPath by remember { mutableStateOf<String?>(null) }
+                    PhotoView(
+                        label = stringResource(R.string.photo_front_label),
+                        path = current.frontPhotoPath,
+                        onClick = { current.frontPhotoPath?.let { viewingPath = it } },
+                        modifier = Modifier.weight(1f),
+                    )
+                    PhotoView(
+                        label = stringResource(R.string.photo_back_label),
+                        path = current.backPhotoPath,
+                        onClick = { current.backPhotoPath?.let { viewingPath = it } },
+                        modifier = Modifier.weight(1f),
+                    )
+                    viewingPath?.let { path ->
+                        PhotoViewerDialog(
+                            label = if (path == current.frontPhotoPath) {
+                                stringResource(R.string.photo_front_label)
+                            } else {
+                                stringResource(R.string.photo_back_label)
+                            },
+                            path = path,
+                            onDismiss = { viewingPath = null },
                         )
-                        PhotoView(
-                            label = "Сторона со штрихкодом",
-                            path = current.backPhotoPath,
-                            onClick = { current.backPhotoPath?.let { viewingPath = it } },
-                            modifier = Modifier.weight(1f),
-                        )
-                        viewingPath?.let { path ->
-                            PhotoViewerDialog(
-                                label = if (path == current.frontPhotoPath) "Лицевая сторона" else "Сторона со штрихкодом",
-                                path = path,
-                                onDismiss = { viewingPath = null },
-                            )
-                        }
                     }
                 }
             }
-            Spacer(Modifier.height(24.dp))
+        }
+        Spacer(Modifier.height(24.dp))
     }
 }
 
@@ -218,7 +256,8 @@ private fun PhotoView(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val photo = remember(path) { PhotoStore.load(path, maxDim = 512) }
+    // Декод JPEG — асинхронно, вне главного потока
+    val photo = rememberPhoto(path, maxDim = 512)
     if (photo != null) {
         Image(
             bitmap = photo.asImageBitmap(),
@@ -244,7 +283,7 @@ private fun PhotoViewerDialog(
     path: String,
     onDismiss: () -> Unit,
 ) {
-    val photo = remember(path) { PhotoStore.load(path, maxDim = 2048) } ?: return
+    val photo = rememberPhoto(path, maxDim = 2048) ?: return
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -294,7 +333,7 @@ private fun PhotoViewerDialog(
             ) {
                 Icon(
                     Icons.Filled.Close,
-                    contentDescription = "Закрыть",
+                    contentDescription = stringResource(R.string.cd_close),
                     tint = Color.White,
                 )
             }
@@ -303,7 +342,11 @@ private fun PhotoViewerDialog(
 }
 
 @Composable
-private fun CodePanel(bitmap: Bitmap, card: Card, onClick: () -> Unit = {}) {
+private fun CodePanel(
+    bitmap: android.graphics.Bitmap,
+    card: Card,
+    onClick: () -> Unit = {},
+) {
     val isQr = card.codeType == CodeType.QR
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -313,7 +356,10 @@ private fun CodePanel(bitmap: Bitmap, card: Card, onClick: () -> Unit = {}) {
     ) {
         Image(
             bitmap = bitmap.asImageBitmap(),
-            contentDescription = "${if (isQr) "QR-код" else "Штрихкод"} карты ${card.storeName}",
+            contentDescription = stringResource(
+                if (isQr) R.string.cd_code_qr else R.string.cd_code_barcode,
+                card.storeName,
+            ),
             contentScale = ContentScale.Fit,
             modifier = Modifier
                 .fillMaxWidth()
@@ -332,11 +378,14 @@ private fun CodePanel(bitmap: Bitmap, card: Card, onClick: () -> Unit = {}) {
 
 /**
  * Код на весь экран — крупно для кассового сканера. Тап — закрыть.
+ * Если крупный рендер не удался (значение не кодируется), показываем
+ * обычный панельный bitmap — он по построению существует.
  */
 @Composable
 private fun FullscreenCodeDialog(
     card: Card,
     onDismiss: () -> Unit,
+    fallback: android.graphics.Bitmap? = null,
 ) {
     Dialog(
         onDismissRequest = onDismiss,
@@ -346,15 +395,13 @@ private fun FullscreenCodeDialog(
         ),
     ) {
         val isQr = card.codeType == CodeType.QR
-        val big = remember(card.id, card.codeValue, card.codeType, card.barcodeFormat) {
-            CodeRenderer.render(
-                card.codeValue,
-                card.codeType,
-                card.barcodeFormat,
-                width = if (isQr) 1400 else 1800,
-                height = if (isQr) 1400 else 600,
-            )
-        }
+        val big = rememberCodeBitmap(
+            value = card.codeValue,
+            codeType = card.codeType,
+            barcodeFormat = card.barcodeFormat,
+            width = if (isQr) 1400 else 1800,
+            height = if (isQr) 1400 else 600,
+        ) ?: fallback
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
@@ -364,16 +411,21 @@ private fun FullscreenCodeDialog(
                     detectTapGestures(onTap = { onDismiss() })
                 },
         ) {
-            Image(
-                bitmap = big.asImageBitmap(),
-                contentDescription = "${if (isQr) "QR-код" else "Штрихкод"} карты ${card.storeName}",
-                contentScale = ContentScale.Fit,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp)
-                    .background(Color.White, RoundedCornerShape(16.dp))
-                    .padding(16.dp),
-            )
+            if (big != null) {
+                Image(
+                    bitmap = big.asImageBitmap(),
+                    contentDescription = stringResource(
+                        if (isQr) R.string.cd_code_qr else R.string.cd_code_barcode,
+                        card.storeName,
+                    ),
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp)
+                        .background(Color.White, RoundedCornerShape(16.dp))
+                        .padding(16.dp),
+                )
+            }
         }
     }
 }

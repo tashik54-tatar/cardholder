@@ -6,8 +6,13 @@
         android:name="android.hardware.camera"
         android:required="false" />
 
+    <!--
+      База карт (значения штрихкодов) и фото сторон — приватные данные:
+      облачный бэкап и перенос на новое устройство через Auto Backup
+      отключены. Резервная копия — только штатный экспорт CSV.
+    -->
     <application
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"

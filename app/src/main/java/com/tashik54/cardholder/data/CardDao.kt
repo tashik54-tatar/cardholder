@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
@@ -19,8 +20,17 @@ interface CardDao {
     @Query("SELECT * FROM cards WHERE id = :id")
     fun observeById(id: Long): Flow<Card?>
 
+    @Query("SELECT * FROM cards")
+    suspend fun getAll(): List<Card>
+
     @Insert
     suspend fun insert(card: Card): Long
+
+    /** Массовая вставка одной транзакцией — импорт либо целиком, либо никак. */
+    @Transaction
+    suspend fun insertAll(cards: List<Card>) {
+        cards.forEach { insert(it) }
+    }
 
     @Update
     suspend fun update(card: Card)

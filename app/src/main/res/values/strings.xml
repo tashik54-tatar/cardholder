@@ -1,4 +1,95 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Мои карты</string>
+
+    <!-- Общие действия -->
+    <string name="action_cancel">Отмена</string>
+    <string name="action_delete">Удалить</string>
+    <string name="action_done">Готово</string>
+    <string name="action_take_photo">Сделать фото</string>
+    <string name="action_from_gallery">Из галереи</string>
+    <string name="cd_back">Назад</string>
+    <string name="cd_cancel">Отмена</string>
+    <string name="cd_close">Закрыть</string>
+    <string name="cd_edit">Редактировать</string>
+    <string name="cd_save">Сохранить</string>
+    <string name="cd_delete_card">Удалить карту</string>
+    <string name="cd_remove_photo">Убрать фото</string>
+
+    <!-- Нижнее меню -->
+    <string name="nav_add">Добавить</string>
+    <string name="nav_settings">Настройки</string>
+
+    <!-- Главный экран -->
+    <string name="home_empty_title">Нет карт</string>
+    <string name="home_empty_hint">Нажмите «+», чтобы добавить первую</string>
+    <string name="cd_card_front">%1$s — лицевая сторона</string>
+    <string name="cd_card_back">%1$s — сторона со штрихкодом</string>
+    <string name="cd_card_photo">%1$s</string>
+
+    <!-- Форма карты -->
+    <string name="title_new">Новая карта</string>
+    <string name="title_edit">Редактирование</string>
+    <string name="field_store_name">Название магазина</string>
+    <string name="section_photos">Фото сторон</string>
+    <string name="slot_front_label">Лицевая сторона</string>
+    <string name="slot_front_hint">Сфотографировать лицевую</string>
+    <string name="slot_back_label">Сторона со штрихкодом</string>
+    <string name="slot_back_hint">Сфотографировать штрихкод</string>
+    <string name="slot_replace_hint">Нажмите, чтобы заменить</string>
+    <string name="photos_autodetect_hint">Штрихкод с фото распознаётся автоматически</string>
+    <string name="field_code_value">Значение кода (номер карты или ссылка)</string>
+    <string name="cd_code_preview">Предпросмотр кода</string>
+    <string name="code_detected">Код распознан: %1$s</string>
+    <string name="btn_code_from_file">Код из файла</string>
+    <string name="dialog_photo_title">Фото стороны</string>
+    <string name="dialog_photo_text_front">Лицевая сторона: сфотографировать карту или взять готовую картинку из телефона?</string>
+    <string name="dialog_photo_text_back">Сторона со штрихкодом: сфотографировать или взять готовую картинку (можно скриншот)?</string>
+    <string name="dialog_delete_title">Удалить карту?</string>
+    <string name="dialog_delete_text">Карта «%1$s» и её фото будут удалены безвозвратно.</string>
+    <string name="capture_instruction_front">Сфотографируйте лицевую сторону карты</string>
+    <string name="capture_instruction_back">Сфотографируйте сторону со штрихкодом</string>
+    <string name="toast_image_open_failed">Не удалось открыть изображение</string>
+    <string name="toast_barcode_not_found_photo">Штрихкод на фото не найден — введите код вручную</string>
+    <string name="toast_code_not_found">Код на изображении не найден</string>
+
+    <!-- Экран карты -->
+    <string name="no_code_hint">Код не указан — карта хранит только фото сторон</string>
+    <string name="code_render_failed">Значение нельзя показать кодом: символы не подходят ни одному формату</string>
+    <string name="cd_code_qr">QR-код карты %1$s</string>
+    <string name="cd_code_barcode">Штрихкод карты %1$s</string>
+    <string name="show_photos">Показать фото</string>
+    <string name="hide_photos">Скрыть фото</string>
+    <string name="photo_front_label">Лицевая сторона</string>
+    <string name="photo_back_label">Сторона со штрихкодом</string>
+
+    <!-- Камера -->
+    <string name="camera_permission_needed">Нужно разрешение на камеру</string>
+    <string name="toast_capture_failed">Не удалось обработать снимок, попробуйте ещё раз</string>
+    <string name="toast_camera_error">Ошибка камеры, попробуйте ещё раз</string>
+    <string name="toast_camera_timeout">Камера не ответила — попробуйте ещё раз</string>
+
+    <!-- Обрезка -->
+    <string name="crop_title">Обрежьте фото</string>
+    <string name="cd_photo_for_crop">Фото для обрезки</string>
+
+    <!-- Настройки -->
+    <string name="title_settings">Настройки</string>
+    <string name="row_import">Импорт CSV</string>
+    <string name="row_export">Экспорт CSV</string>
+    <string name="hide_photos_setting">Скрывать фото на странице карты</string>
+    <string name="theme_setting_auto">Тема: авто (как в системе)</string>
+    <string name="theme_setting_light">Тема: светлая</string>
+    <string name="theme_setting_dark">Тема: тёмная</string>
+    <string name="theme_dialog_title">Тема</string>
+    <string name="theme_option_auto">Авто (как в системе)</string>
+    <string name="theme_option_light">Светлая</string>
+    <string name="theme_option_dark">Тёмная</string>
+    <string name="theme_action_cancel">Отмена</string>
+    <string name="csv_note">CSV переносит данные карт (название, тип и значение кода). Фото сторон остаются только в приложении.</string>
+    <string name="toast_export_ok">Экспортировано карт: %1$d</string>
+    <string name="toast_export_failed">Не удалось сохранить файл</string>
+    <string name="import_result_imported">Импортировано карт: %1$d</string>
+    <string name="import_result_dupes">, дубликатов: %1$d</string>
+    <string name="import_result_skipped">, пропущено строк: %1$d</string>
 </resources>

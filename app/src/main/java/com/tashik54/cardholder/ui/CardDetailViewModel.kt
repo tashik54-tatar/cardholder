@@ -7,12 +7,10 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.tashik54.cardholder.data.Card
 import com.tashik54.cardholder.data.CardRepository
-import com.tashik54.cardholder.data.PhotoStore
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import androidx.lifecycle.viewModelScope
 
 class CardDetailViewModel(
     private val repository: CardRepository,
@@ -27,13 +25,9 @@ class CardDetailViewModel(
         viewModelScope.launch { repository.update(card) }
     }
 
-    /** Удаляет карту вместе с файлами фото сторон. */
+    /** Удаляет карту вместе с файлами фото сторон (порядок — в репозитории). */
     fun delete(card: Card) {
-        viewModelScope.launch {
-            PhotoStore.delete(card.frontPhotoPath)
-            PhotoStore.delete(card.backPhotoPath)
-            repository.delete(card)
-        }
+        viewModelScope.launch { repository.deleteCardWithPhotos(card) }
     }
 
     companion object {

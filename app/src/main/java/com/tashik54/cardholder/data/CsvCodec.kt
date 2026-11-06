@@ -5,12 +5,18 @@ package com.tashik54.cardholder.data
  *
  * Формат: UTF-8 с BOM (для Excel), разделитель «;» (понятен русскому Excel),
  * поля с кавычками по RFC 4180. При разборе разделитель определяется
- * автоматически («;» или «»), заголовок и BOM допускаются.
+ * автоматически («;» или «,»), заголовок и BOM допускаются.
+ *
+ * Защита от CSV-инъекции: поля, начинающиеся с =, +, -, @ или табуляции,
+ * при экспорте получают префикс-апостроф (Excel не исполнит такую ячейку
+ * как формулу); при разборе апостроф снимается — экспорт/импорт без потерь.
  */
 object CsvCodec {
 
     private val HEADER = listOf("name", "codeType", "barcodeFormat", "codeValue", "createdAt")
     private const val BOM = "\uFEFF"
+    private const val FORMULA_PREFIX = "'"
+    private val DANGEROUS_FIRST = "=+-@\t"
 
     /** Сериализация карт в CSV-текст. Фото сторон в CSV не переносятся. */
     fun export(cards: List<Card>): String = buildString {
@@ -31,11 +37,28 @@ object CsvCodec {
         }
     }
 
-    private fun escape(field: String): String =
-        if (field.isEmpty()) {
-            ""
-        } else if (field.any { it == ';' || it == ',' || it == '"' || it == '\n' || it == '\r' }) {
-            "\"${field.replace("\"", "\"\"")}\""
+    private fun escape(field: String): String {
+        val neutralized = if (field.isNotEmpty() && DANGEROUS_FIRST.indexOf(field[0]) >= 0) {
+            FORMULA_PREFIX + field
+        } else {
+            field
+        }
+        return if (
+            neutralized.isEmpty() ||
+            neutralized.any { it == ';' || it == ',' || it == '"' || it == '\n' || it == '\r' }
+        ) {
+            "\"${neutralized.replace("\"", "\"\"")}\""
+        } else {
+            neutralized
+        }
+    }
+
+    /** Снимает префикс-апостроф, добавленный защитой от формул. */
+    private fun unescapeFormulaGuard(field: String): String =
+        if (field.length >= 2 && field[0] == FORMULA_PREFIX[0] &&
+            DANGEROUS_FIRST.indexOf(field[1]) >= 0
+        ) {
+            field.substring(1)
         } else {
             field
         }
@@ -95,7 +118,7 @@ object CsvCodec {
         var i = 0
 
         fun endField() {
-            row.add(field.toString())
+            row.add(unescapeFormulaGuard(field.toString()))
             field = StringBuilder()
         }
 

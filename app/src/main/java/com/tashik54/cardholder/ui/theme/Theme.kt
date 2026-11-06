@@ -94,6 +94,12 @@ private val DarkScheme = darkColorScheme(
     background = Color.Transparent,
 )
 
+/** Акцент опасных действий (удаление) — единая точка вместо захардкоженных значений. */
+val AccentDanger = Color(0xFFC65B4E)
+
+/** Цвет текста/иконок поверх светлого фото карты. */
+val OnPhotoBadge = Color(0xFF1C1B22)
+
 /** Тёмная ли сейчас тема: с учётом выбора пользователя в настройках. */
 @Composable
 fun isDarkTheme(): Boolean = when (AppSettings.themeMode.value) {
