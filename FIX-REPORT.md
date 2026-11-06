@@ -77,8 +77,14 @@ gradlew.bat assembleRelease
 
 19 из 22 Kotlin-файлов + `strings.xml`, `AndroidManifest.xml`, `app/build.gradle.kts`, `.gitignore`; новые: `AsyncGraphics.kt`, `CodeRendererTest.kt`, `keystore/` (2 файла). `PhotoCropScreen`, `Theme.kt`, тесты — точечные правки. Удалено: старый APK v1.0 из корня, дубль AUDIT-REPORT.
 
+## Публикация
+
+- Коммит `c7db639` «v1.1: fix all 29 audit findings …» запушен в `main` репозитория `tashik54-tatar/cardholder` (29 файлов, +1435/−463).
+- Релиз: **https://github.com/tashik54-tatar/cardholder/releases/tag/v1.1** с ассетом `MyCards-v1.1-release.apk` (24,1 МБ).
+- Исправленные исходники синхронизированы в корень репо; папка `cardholder-fixed/` остаётся рядом как локальная копия-поставка (в `.gitignore`).
+
 ## Что осталось (вне скоупа этого прохода)
 
 - `LocalLifecycleOwner` deprecated (warning, не ошибка) — миграция на `androidx.lifecycle.compose.LocalLifecycleOwner` при обновлении lifecycle.
 - Ручная проверка на устройстве: камера/повороты/фонарь прошивки — статически всё покрыто, динамически не гонялось.
-- GitHub release v1.1: репо проекта в `E:\AI\ZCode\проекты\cardholder` — не публиковал без команды (и APK там не заменял).
+- Обновление с v1.0 поверх не сработает (новый ключ подписи) — только удаление + установка v1.1.
