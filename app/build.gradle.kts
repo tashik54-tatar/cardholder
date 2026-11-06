@@ -15,13 +15,14 @@ android {
         applicationId = "com.tashik54.cardholder"
         minSdk = 26
         targetSdk = 34
-        // Схема версий: versionCode монотонно растёт, versionName — релизная
-        // метка пользователя (v1.0 = код 22, v1.1 = код 23 — аудит + фиксы).
+        // Схема версий (semver): versionCode монотонно растёт, versionName —
+        // MAJOR.MINOR.PATCH для пользователя. Патч-фиксы поверх 1.0 → 1.0.x
+        // (v1.0 = код 22, v1.0.1 = код 23 — аудит-фиксы), фичи → 1.1.0 и т.д.
         versionCode = 23
-        versionName = "1.1"
+        versionName = "1.0.1"
     }
 
-    // Имя APK с версией: MyCards-v1.1-release.apk
+    // Имя APK с версией: MyCards-v1.0.1-release.apk
     applicationVariants.all {
         outputs.all {
             (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl).outputFileName =
